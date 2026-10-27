@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { analyze, type Snapshot } from "../src/lib/history";
+import { MATCHER_VERSION } from "../src/lib/match";
 
 const stats = { kalshiMarkets: 1, polymarketMarkets: 1, matchedPairs: 1, opportunities: 0, executableProfit: 0, durationMs: 1 };
 
 function snap(t: string, profit: number, dir = "KALSHI_YES+POLY_NO"): Snapshot {
   return {
     t,
+    v: MATCHER_VERSION,
     stats: { ...stats, opportunities: profit > 0 ? 1 : 0, executableProfit: profit },
     pairs: [{ id: "A", title: "Pair A", score: 0.8, kMid: 0.4, pMid: 0.5, div: -0.1, dir, topEdge: 0.03, contracts: 100, profit, apr: null }],
   };
@@ -30,6 +32,14 @@ describe("analyze", () => {
     const a = analyze([snap("2026-10-27T10:00:00Z", 2), snap("2026-10-27T14:00:00Z", 2)]);
     expect(a.episodes).toHaveLength(2);
     expect(a.summary.shareSingleScan).toBe(1);
+  });
+
+  it("ignores snapshots produced by an older matcher", () => {
+    const old = { ...snap("2026-10-27T09:30:00Z", 99), v: undefined };
+    const a = analyze([old, snap("2026-10-27T10:00:00Z", 2)]);
+    expect(a.scans).toBe(1);
+    expect(a.skippedOldVersion).toBe(1);
+    expect(a.episodes[0].peakProfit).toBe(2);
   });
 
   it("treats a direction flip as a new episode", () => {

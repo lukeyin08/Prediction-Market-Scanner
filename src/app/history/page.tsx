@@ -46,6 +46,13 @@ export default function HistoryPage() {
             <Stat label="Median lifetime" value={minutes(s!.medianDurationMin)} />
             <Stat label="Gone by next scan" value={pct(s!.shareSingleScan, 0)} />
           </div>
+          {data.scans < 4 ? (
+            <div className="notice">
+              Collecting data: {data.scans} scan{data.scans === 1 ? "" : "s"} logged with the current matcher so far. The
+              job runs every 30 minutes; charts appear once there are a few hours of history.
+            </div>
+          ) : (
+            <>
           <p className="muted small">
             Logging since {data.firstScan ? new Date(data.firstScan).toLocaleString() : "–"}.
           </p>
@@ -110,6 +117,8 @@ export default function HistoryPage() {
               </tbody>
             </table>
           </div>
+            </>
+          )}
         </>
       )}
     </>

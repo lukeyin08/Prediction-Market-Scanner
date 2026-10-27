@@ -80,8 +80,10 @@ main {
   gap: 8px;
 }
 .brand-mark {
-  color: var(--accent);
-  font-size: 20px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--kalshi) 50%, var(--poly) 50%);
 }
 .topbar nav {
   display: flex;
@@ -339,4 +341,16 @@ tr.detail td {
   border-radius: 8px;
   padding: 12px 14px;
   overflow-x: auto;
+}
+
+.leg {
+  margin-top: 8px;
+}
+.leg ul {
+  margin: 2px 0 0;
+  list-style: none;
+  padding-left: 26px;
+}
+.contract strong {
+  font-weight: 600;
 }

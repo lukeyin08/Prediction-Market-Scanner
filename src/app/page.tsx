@@ -144,16 +144,17 @@ function Row({ pair: p, open, onToggle }: { pair: PairResult; open: boolean; onT
   const top = p.alternatives[0];
   const edge = p.best?.topEdge ?? top?.topEdge ?? null;
   const close = [p.kalshi.closeTime, p.polymarket.closeTime].sort()[0];
-  const kTitle = p.kalshi.subtitle ? `${p.kalshi.eventTitle}: ${p.kalshi.subtitle}` : p.kalshi.title;
+  const legs = p.best ? groupFills(p.best.fills) : [];
 
   return (
     <Fragment>
       <tr className="row" onClick={onToggle} aria-expanded={open}>
         <td>
           <div className="contract">
+            {p.kalshi.subtitle && <strong>{p.kalshi.subtitle}</strong>}
             <span>
               <span className="venue k">K</span>
-              {kTitle}
+              {p.kalshi.subtitle ? p.kalshi.eventTitle : p.kalshi.title}
             </span>
             <span className="muted">
               <span className="venue p">P</span>
@@ -195,13 +196,21 @@ function Row({ pair: p, open, onToggle }: { pair: PairResult; open: boolean; onT
                     <div className="small muted">
                       Cost {usd(p.best.cost)} + fees {usd(p.best.fees)} → pays {usd(p.best.contracts)} at resolution
                     </div>
-                    <ul className="mono">
-                      {p.best.fills.map((f, i) => (
-                        <li key={i}>
-                          {f.venue} {f.side} {f.size.toLocaleString()} @ {cents(f.price)}
-                        </li>
-                      ))}
-                    </ul>
+                    {legs.map((leg) => (
+                      <div key={leg.key} className="leg">
+                        <div className="small">
+                          <span className={`venue ${leg.venue === "kalshi" ? "k" : "p"}`}>{leg.venue === "kalshi" ? "K" : "P"}</span>
+                          Buy {leg.side} · {fmtQty(leg.size)} contracts · avg {cents(leg.avg)}
+                        </div>
+                        <ul className="mono">
+                          {leg.fills.map((f) => (
+                            <li key={f.price}>
+                              {fmtQty(f.size)} @ {cents(f.price)}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
                   </>
                 ) : (
                   <div className="muted small">
@@ -231,10 +240,8 @@ function Row({ pair: p, open, onToggle }: { pair: PairResult; open: boolean; onT
                   </a>
                   <br />
                   <span className="muted">
-                    Fees: Kalshi {(p.kalshi.fee.kind === "kalshi" ? p.kalshi.fee.coeff : 0) * 100}% × P(1−P) · Polymarket{" "}
-                    {p.polymarket.fee.kind === "polymarket" && p.polymarket.fee.rate > 0
-                      ? `${p.polymarket.fee.rate * 100}% × P(1−P)`
-                      : "none"}
+                    Fees: Kalshi {feeLabel(p.kalshi.fee.kind === "kalshi" ? p.kalshi.fee.coeff : 0)} · Polymarket{" "}
+                    {feeLabel(p.polymarket.fee.kind === "polymarket" ? p.polymarket.fee.rate : 0)}
                   </span>
                 </div>
               </div>
@@ -244,4 +251,31 @@ function Row({ pair: p, open, onToggle }: { pair: PairResult; open: boolean; onT
       )}
     </Fragment>
   );
+}
+
+function feeLabel(coeff: number): string {
+  return coeff > 0 ? `${+(coeff * 100).toFixed(2)}% × P(1−P)` : "none";
+}
+
+function fmtQty(x: number): string {
+  return x.toLocaleString("en-US", { maximumFractionDigits: 2 });
+}
+
+type Leg = { key: string; venue: string; side: string; size: number; avg: number; fills: { price: number; size: number }[] };
+
+/** One block per leg (venue + side), price levels ascending, with the size-weighted average price. */
+function groupFills(fills: { venue: string; side: string; price: number; size: number }[]): Leg[] {
+  const legs = new Map<string, Leg>();
+  for (const f of fills) {
+    const key = `${f.venue}|${f.side}`;
+    const leg = legs.get(key) ?? { key, venue: f.venue, side: f.side, size: 0, avg: 0, fills: [] };
+    leg.fills.push({ price: f.price, size: f.size });
+    leg.size += f.size;
+    legs.set(key, leg);
+  }
+  for (const leg of legs.values()) {
+    leg.fills.sort((a, b) => a.price - b.price);
+    leg.avg = leg.fills.reduce((s, f) => s + f.price * f.size, 0) / leg.size;
+  }
+  return [...legs.values()];
 }

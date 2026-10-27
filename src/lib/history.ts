@@ -1,3 +1,4 @@
+import { MATCHER_VERSION } from "./match";
 import type { ScanResult } from "./types";
 
 /** One compact row per matched pair per scan, as stored in snapshots/*.jsonl. */
@@ -17,6 +18,8 @@ export interface SnapshotPair {
 
 export interface Snapshot {
   t: string;
+  /** Matcher version that produced this snapshot (absent = 1). */
+  v?: number;
   stats: ScanResult["stats"];
   pairs: SnapshotPair[];
 }
@@ -24,6 +27,7 @@ export interface Snapshot {
 export function toSnapshot(scan: ScanResult): Snapshot {
   return {
     t: scan.generatedAt,
+    v: MATCHER_VERSION,
     stats: scan.stats,
     pairs: scan.pairs.map((p) => {
       const top = p.alternatives[0];
@@ -59,7 +63,10 @@ export interface Episode {
 
 export interface Analysis {
   generatedAt: string;
+  matcherVersion: number;
   scans: number;
+  /** Snapshots skipped because an older matcher produced them. */
+  skippedOldVersion: number;
   firstScan: string | null;
   lastScan: string | null;
   timeseries: { t: string; matchedPairs: number; opportunities: number; executableProfit: number }[];
@@ -90,9 +97,15 @@ function quantile(sorted: number[], q: number): number | null {
  * scans in which the same pair stayed profitable in the same direction. A gap
  * longer than `maxGapMin` between scans (a missed run) ends the episode.
  */
-export function analyze(snapshots: Snapshot[], opts: { maxGapMin?: number } = {}): Analysis {
+export function analyze(
+  snapshots: Snapshot[],
+  opts: { maxGapMin?: number; matcherVersion?: number } = {},
+): Analysis {
   const maxGapMs = (opts.maxGapMin ?? 75) * 60_000;
-  const snaps = snapshots.slice().sort((a, b) => Date.parse(a.t) - Date.parse(b.t));
+  const version = opts.matcherVersion ?? MATCHER_VERSION;
+  const snaps = snapshots
+    .filter((s) => (s.v ?? 1) === version)
+    .sort((a, b) => Date.parse(a.t) - Date.parse(b.t));
 
   type Open = Episode & { lastT: number };
   const open = new Map<string, Open>();
@@ -160,7 +173,9 @@ export function analyze(snapshots: Snapshot[], opts: { maxGapMin?: number } = {}
 
   return {
     generatedAt: new Date().toISOString(),
+    matcherVersion: version,
     scans: snaps.length,
+    skippedOldVersion: snapshots.length - snaps.length,
     firstScan: snaps[0]?.t ?? null,
     lastScan: snaps.at(-1)?.t ?? null,
     timeseries: snaps.map((s) => ({

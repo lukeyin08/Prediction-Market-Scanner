@@ -13,9 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <header className="topbar">
           <Link href="/" className="brand">
-            <span className="brand-mark" aria-hidden>
-              ◐
-            </span>
+            <span className="brand-mark" aria-hidden />
             Prediction Market Scanner
           </Link>
           <nav>
