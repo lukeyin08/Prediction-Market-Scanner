@@ -44,7 +44,7 @@ jobs:
             echo "Scan snapshots written by .github/workflows/snapshot.yml" > README.md
           fi
           # Data-only branch: tell Vercel not to try building it on every push.
-          [ -f data-branch/vercel.json ] || echo '{"git":{"deploymentEnabled":false}}' > data-branch/vercel.json
+          [ -f "$GITHUB_WORKSPACE/data-branch/vercel.json" ] || echo '{"git":{"deploymentEnabled":false}}' > "$GITHUB_WORKSPACE/data-branch/vercel.json"
 
       - name: Scan
         env:
