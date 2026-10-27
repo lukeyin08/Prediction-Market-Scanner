@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "scan": "tsx scripts/scan.ts",
     "snapshot": "tsx scripts/snapshot.ts",
-    "analyze": "tsx scripts/analyze.ts"
+    "analyze": "tsx scripts/analyze.ts",
+    "dump": "tsx scripts/dump-markets.ts"
   },
   "engines": {
     "node": ">=20"

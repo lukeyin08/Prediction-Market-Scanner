@@ -1,0 +1,24 @@
+name: dump-markets
+
+# Manually dump normalized markets from both venues as an artifact,
+# for offline matcher evaluation.
+on:
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run dump -- --out fixtures
+      - uses: actions/upload-artifact@v4
+        with:
+          name: markets
+          path: fixtures/markets.json
+          retention-days: 7

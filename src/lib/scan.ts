@@ -21,7 +21,7 @@ export interface ScanOptions {
 
 const DAY_MS = 86_400_000;
 
-function liveFilter(markets: BinaryMarket[], now: number, maxDays: number, minLiquidity: number): BinaryMarket[] {
+export function liveFilter(markets: BinaryMarket[], now: number, maxDays: number, minLiquidity: number): BinaryMarket[] {
   return markets.filter((m) => {
     const close = Date.parse(m.closeTime);
     if (!Number.isFinite(close) || close <= now || close - now > maxDays * DAY_MS) return false;
