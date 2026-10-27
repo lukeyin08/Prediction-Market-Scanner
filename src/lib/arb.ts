@@ -200,7 +200,7 @@ export function evaluatePair(
   return results.sort((x, y) => y.profit - x.profit || (y.topEdge ?? -1) - (x.topEdge ?? -1));
 }
 
+/** Midpoint of a two-sided quote. A one-sided quote (no bid, or no ask) has no meaningful midpoint. */
 export function midpoint(bid: number | null, ask: number | null): number | null {
-  if (bid !== null && ask !== null) return (bid + ask) / 2;
-  return bid ?? ask ?? null;
+  return bid !== null && ask !== null ? (bid + ask) / 2 : null;
 }

@@ -1,33 +1,34 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import "@fontsource-variable/schibsted-grotesk";
 import "./globals.css";
+import { Nav } from "./nav";
 
 export const metadata: Metadata = {
   title: "Prediction Market Scanner",
-  description: "Cross-venue mispricing between Kalshi and Polymarket, net of fees and order book depth.",
+  description: "The same question priced on Kalshi and Polymarket, and whether the gap is real money after fees.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <header className="topbar">
-          <Link href="/" className="brand">
-            <span className="brand-mark" aria-hidden />
-            Prediction Market Scanner
-          </Link>
-          <nav>
-            <Link href="/">Live</Link>
-            <Link href="/history">Persistence</Link>
-            <Link href="/methodology">Method</Link>
-            <a href="https://github.com/lukeyin08/prediction-market-scanner">GitHub</a>
-          </nav>
-        </header>
-        <main>{children}</main>
-        <footer className="footer">
-          Data from the public Kalshi and Polymarket APIs. Not investment advice: always read both contracts&apos;
-          resolution rules before trading.
-        </footer>
+        <div className="frame">
+          <header className="topbar">
+            <a href="/" className="brand">
+              <span className="brand-mark" aria-hidden>
+                <span />
+                <span />
+              </span>
+              Prediction Market Scanner
+            </a>
+            <Nav />
+          </header>
+          <main>{children}</main>
+          <footer className="footer">
+            Prices come from the public Kalshi and Polymarket APIs. This is a research tool, not investment advice:
+            read both contracts&apos; resolution rules before trading.
+          </footer>
+        </div>
       </body>
     </html>
   );

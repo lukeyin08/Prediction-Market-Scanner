@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluatePair, walkLegs } from "../src/lib/arb";
+import { evaluatePair, midpoint, walkLegs } from "../src/lib/arb";
 import type { Book, FeeModel } from "../src/lib/types";
 
 const KALSHI: FeeModel = { kind: "kalshi", coeff: 0.07 };
@@ -137,5 +137,13 @@ describe("evaluatePair", () => {
     expect(best.direction).toBe("POLY_YES+KALSHI_NO");
     expect(best.profit).toBeGreaterThan(0);
     expect(other.profit).toBe(0);
+  });
+});
+
+describe("midpoint", () => {
+  it("needs a two-sided quote", () => {
+    expect(midpoint(0.4, 0.42)).toBeCloseTo(0.41, 10);
+    expect(midpoint(null, 0.97)).toBeNull();
+    expect(midpoint(0.01, null)).toBeNull();
   });
 });

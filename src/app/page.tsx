@@ -1,11 +1,14 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PairResult, ScanResult } from "@/lib/types";
 import { getJson } from "./fetch";
-import { DIRECTION_LABEL, cents, earliestClose, pct, pts, shortDate, timeAgo, usd } from "./format";
+import { cents, earliestClose, pct, shortDate, timeAgo, usd } from "./format";
+import { breakdown, DollarBar, headline, legLabel, type Breakdown } from "./hedge";
 
-type View = "arb" | "divergence" | "all";
+type View = "arb" | "near" | "all";
+
+const c = (x: number, dp = 1) => `${(x * 100).toFixed(dp)}¢`;
 
 export default function LivePage() {
   const [scan, setScan] = useState<ScanResult | null>(null);
@@ -32,248 +35,314 @@ export default function LivePage() {
     load();
   }, [load]);
 
+  const pairs = useMemo(() => scan?.pairs ?? [], [scan]);
   const rows = useMemo(() => {
-    const pairs = scan?.pairs ?? [];
     if (view === "arb") return pairs.filter((p) => p.best);
-    if (view === "divergence")
+    if (view === "near")
+      // No edge yet, ordered by how close the cheapest pair comes to costing under $1.
       return pairs
-        .filter((p) => p.divergence !== null)
-        .slice()
-        .sort((a, b) => Math.abs(b.divergence!) - Math.abs(a.divergence!));
+        .filter((p) => !p.best)
+        .map((p) => ({ p, b: breakdown(p) }))
+        .filter((x): x is { p: PairResult; b: Breakdown } => x.b !== null)
+        .sort((a, b) => b.b.edge - a.b.edge)
+        .map((x) => x.p);
     return pairs;
-  }, [scan, view]);
+  }, [pairs, view]);
 
+  const featured = useMemo(
+    () => pairs.filter((p) => p.best).sort((a, b) => (b.best?.profit ?? 0) - (a.best?.profit ?? 0))[0] ?? null,
+    [pairs],
+  );
   const s = scan?.stats;
 
   return (
     <>
-      <h1>Kalshi × Polymarket mispricing</h1>
-      <p className="sub">
-        The same event, priced on two venues. When YES on one plus NO on the other costs less than $1 after fees, the
-        difference is locked in at resolution, as long as both contracts resolve the same way.
-      </p>
+      <section className="hero" aria-labelledby="title">
+        <div>
+          <h1 id="title">Same question, two prices.</h1>
+          <p className="lede">
+            Kalshi and Polymarket often list the same contract. Buying YES on one and NO on the other pays exactly $1
+            when it resolves, so if the pair costs less than $1 after fees, the difference is locked in.
+          </p>
+        </div>
 
-      <div className="stats">
-        <Stat label="Contracts scanned" value={s ? ((s.kalshiMarkets ?? 0) + (s.polymarketMarkets ?? 0)).toLocaleString() : null} />
-        <Stat label="Pairs priced" value={s ? String(s.matchedPairs ?? 0) : null} />
-        <Stat label="Positive edge after fees" value={s ? String(s.opportunities ?? 0) : null} good={!!s?.opportunities} />
-        <Stat label="Executable profit (all)" value={s ? usd(s.executableProfit) : null} good={!!s?.executableProfit} />
-      </div>
+        {featured ? <Featured pair={featured} /> : loading ? <HeroSkeleton /> : null}
 
-      <div className="toolbar">
-        <button className="tab" aria-pressed={view === "arb"} onClick={() => setView("arb")}>
-          Arbitrage{s ? ` (${s.opportunities})` : ""}
-        </button>
-        <button className="tab" aria-pressed={view === "divergence"} onClick={() => setView("divergence")}>
-          Biggest divergences
-        </button>
-        <button className="tab" aria-pressed={view === "all"} onClick={() => setView("all")}>
-          All pairs{s ? ` (${s.matchedPairs})` : ""}
-        </button>
-        <span className="spacer" />
-        {scan && isStale(scan.generatedAt) && (
-          <span className="pill warn" title="The scheduled snapshot job may have stopped">
-            stale
-          </span>
+        {s && (
+          <p className="summary">
+            The latest scan read <strong>{((s.kalshiMarkets ?? 0) + (s.polymarketMarkets ?? 0)).toLocaleString()}</strong>{" "}
+            contracts, priced <strong>{s.matchedPairs ?? 0}</strong> matched pairs against live order books, and found{" "}
+            <strong>{s.opportunities ?? 0}</strong> that cost less than $1 after fees, worth{" "}
+            <strong>{usd(s.executableProfit)}</strong> at the depth shown.
+          </p>
         )}
+      </section>
+
+      <div className="controls">
+        <div className="segmented" role="group" aria-label="Which pairs to show">
+          <button aria-pressed={view === "arb"} onClick={() => setView("arb")}>
+            Under $1{s ? ` (${s.opportunities})` : ""}
+          </button>
+          <button aria-pressed={view === "near"} onClick={() => setView("near")}>
+            Near misses
+          </button>
+          <button aria-pressed={view === "all"} onClick={() => setView("all")}>
+            All pairs{s ? ` (${s.matchedPairs})` : ""}
+          </button>
+        </div>
+        <span className="spacer" />
         {scan && (
-          <span className="muted small" title="Results are cached for up to 2 minutes">
-            {scan.fromSnapshot ? "Scheduled snapshot from " : "Scanned "}
+          <span className="small muted">
+            {isStale(scan.generatedAt) ? "Stale: " : ""}
+            {scan.fromSnapshot ? "scheduled scan from " : "scanned "}
             {timeAgo(scan.generatedAt)}
           </span>
         )}
         <button className="btn" onClick={load} disabled={loading}>
-          {loading ? "Loading…" : "Reload"}
+          {loading ? "Loading" : "Reload"}
         </button>
       </div>
 
-      {error && <div className="notice warn">Couldn&apos;t load the scan: {error}</div>}
-      {scan?.errors?.length ? (
-        scan.complete === false ? (
-          <div className="notice warn">Partial data: {scan.errors.join("; ")}</div>
-        ) : (
-          <p className="muted small">Note: {scan.errors.join("; ")}</p>
-        )
+      {error && <div className="alert">Couldn&apos;t load the scan: {error}</div>}
+      {scan?.errors?.length && scan.complete === false ? (
+        <div className="alert">Partial data: {scan.errors.join("; ")}</div>
       ) : null}
-      {scan?.warnings?.length ? <p className="muted small">Limits: {scan.warnings.join("; ")}</p> : null}
+      {scan && (scan.errors.length > 0 || (scan.warnings?.length ?? 0) > 0) && scan.complete !== false && (
+        <p className="notes">{[...scan.errors, ...(scan.warnings ?? [])].join(". ")}.</p>
+      )}
 
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Contracts</th>
-              <th className="num">Match</th>
-              <th className="num">Kalshi YES</th>
-              <th className="num">Poly YES</th>
-              <th className="num">Gap</th>
-              <th className="num">Edge / contract</th>
-              <th className="num">Size</th>
-              <th className="num">Profit</th>
-              <th className="num">Annualized</th>
-              <th className="num" title="Earlier of the two venues' close times">
-                Closes
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading && !scan
-              ? Array.from({ length: 6 }, (_, i) => (
-                  <tr key={i}>
-                    <td colSpan={10}>
-                      <div className="skeleton" />
-                    </td>
-                  </tr>
-                ))
-              : rows.map((p) => (
-                  <Row key={p.id} pair={p} open={open === p.id} onToggle={() => setOpen(open === p.id ? null : p.id)} />
-                ))}
-            {!loading && scan && !rows.length && (
-              <tr>
-                <td colSpan={10} className="muted">
-                  {view === "arb"
-                    ? "No pair is arbitrageable after fees right now. That's normal: check “Biggest divergences” or the Persistence tab."
-                    : "No pairs matched."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="list">
+        <div className="cols head" aria-hidden>
+          <span>Contract</span>
+          <span className="num">Kalshi YES</span>
+          <span className="num">Polymarket YES</span>
+          <span>Cost of a $1 pair</span>
+          <span className="num">Left per pair</span>
+          <span className="num">Size</span>
+          <span className="num">Profit</span>
+          <span className="num">Annualized</span>
+          <span className="num">Closes</span>
+        </div>
+
+        {loading && !scan
+          ? Array.from({ length: 6 }, (_, i) => (
+              <div className="cols row" key={i}>
+                <div className="skeleton" style={{ gridColumn: "1 / -1" }} />
+              </div>
+            ))
+          : rows.map((p) => (
+              <Row key={p.id} pair={p} open={open === p.id} onToggle={() => setOpen(open === p.id ? null : p.id)} />
+            ))}
+
+        {!loading && scan && !rows.length && (
+          <p className="empty">
+            {view === "arb"
+              ? "No pair costs less than $1 after fees right now. Near misses shows the closest ones, and Persistence shows how often edges appear."
+              : "No pairs matched in this scan."}
+          </p>
+        )}
       </div>
     </>
   );
 }
 
-function Stat({ label, value, good }: { label: string; value: string | null; good?: boolean }) {
+function Featured({ pair: p }: { pair: PairResult }) {
+  const b = breakdown(p);
+  const best = p.best!;
+  if (!b) return null;
+  const [l1, l2] = b.legs;
+  const close = earliestClose(p.kalshi.closeTime, p.polymarket.closeTime);
   return (
-    <div className="stat">
-      <div className="label">{label}</div>
-      <div className={`value${good ? " good" : ""}`}>{value ?? <div className="skeleton" style={{ height: 28 }} />}</div>
+    <figure className="hedge" style={{ margin: 0 }}>
+      <p className="hedge-title">{headline(p).title}</p>
+      <p className="hedge-sub">
+        Largest edge in the latest scan. <span className="venue-k">Kalshi</span>: {p.kalshi.eventTitle || p.kalshi.title}{" "}
+        <span className="venue-p">Polymarket</span>: {p.polymarket.title}
+      </p>
+      <DollarBar b={b} size="hero" />
+      <div className="hedge-legend" aria-hidden>
+        {b.legs.map((l) => (
+          <span key={l.venue}>
+            <i className={`swatch ${l.venue === "kalshi" ? "kalshi" : "poly"}`} />
+            {legLabel(l)} {c(l.price)}
+          </span>
+        ))}
+        <span>
+          <i className="swatch fee" />
+          Fees {c(b.fee, 2)}
+        </span>
+        <span>
+          <i className="swatch edge" />
+          Left over {c(b.edge, 2)}
+        </span>
+      </div>
+      <figcaption className="hedge-sentence">
+        Buy {legLabel(l1)} at {c(l1.price)} and {legLabel(l2)} at {c(l2.price)}. With fees, each pair costs{" "}
+        {c(1 - b.edge)} and pays $1, leaving <span className="money">{c(b.edge, 2)}</span>. At the depth on the books
+        that&apos;s {best.contracts.toLocaleString()} pairs for <span className="money">{usd(best.profit)}</span>
+        {best.annualizedReturn != null ? `, about ${pct(best.annualizedReturn, 0)} annualized` : ""}
+        {close ? ` until ${shortDate(close)}` : ""}.
+      </figcaption>
+    </figure>
+  );
+}
+
+function HeroSkeleton() {
+  return (
+    <div className="hedge" aria-hidden>
+      <div className="skeleton" style={{ width: "40%", height: 20 }} />
+      <div className="skeleton" style={{ marginTop: 34, height: 46 }} />
+      <div className="skeleton" style={{ marginTop: 18, width: "70%" }} />
     </div>
   );
 }
 
 function Row({ pair: p, open, onToggle }: { pair: PairResult; open: boolean; onToggle: () => void }) {
-  const top = p.alternatives[0];
-  const edge = p.best?.topEdge ?? top?.topEdge ?? null;
+  const b = breakdown(p);
   const close = earliestClose(p.kalshi.closeTime, p.polymarket.closeTime);
   const detailId = `detail-${p.id.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
-  const legs = p.best ? groupFills(p.best.fills) : [];
+  const h = headline(p);
 
   return (
-    <Fragment>
-      <tr className="row" onClick={onToggle}>
-        <td>
-          <div className="contract">
-            <button
-              type="button"
-              className="expand"
-              aria-expanded={open}
-              aria-controls={detailId}
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggle();
-              }}
-            >
-              <span aria-hidden>{open ? "▾" : "▸"}</span> {p.kalshi.subtitle ?? "Details"}
-            </button>
-            <span>
-              <span className="venue k">K</span>
-              {p.kalshi.subtitle ? p.kalshi.eventTitle : p.kalshi.title}
-            </span>
-            <span className="muted">
-              <span className="venue p">P</span>
-              {p.polymarket.title}
-            </span>
-            <span>
+    <div className={`row${open ? " open" : ""}`}>
+      <div className="cols" onClick={onToggle}>
+        <div className="c-outcome">
+          <button
+            type="button"
+            className="toggle"
+            aria-expanded={open}
+            aria-controls={detailId}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle();
+            }}
+          >
+            <span className="outcome">{h.title}</span>
+            <span className="question">{h.context}</span>
+          </button>
+          {(p.flags.length > 0 || p.llm) && (
+            <div className="flags">
               {p.llm && (
-                <span className={`pill ${p.llm.same ? "good" : "warn"}`} title={p.llm.note}>
-                  {p.llm.same ? "LLM: same contract" : "LLM: differs"}
+                <span className={`flag${p.llm.same ? " ok" : ""}`}>{p.llm.same ? "LLM: same rules" : "LLM: rules differ"}</span>
+              )}
+              {p.flags.map((f, i) => (
+                <span className="flag" key={i}>
+                  {f}
                 </span>
-              )}{" "}
-              {p.flags.length > 0 && <span className="pill warn">{p.flags.length} caveat{p.flags.length > 1 ? "s" : ""}</span>}
-            </span>
-          </div>
-        </td>
-        <td className="num">{p.score.toFixed(2)}</td>
-        <td className="num">
-          {cents(p.kalshi.yesBid)} / {cents(p.kalshi.yesAsk)}
-        </td>
-        <td className="num">
-          {cents(p.polymarket.yesBid)} / {cents(p.polymarket.yesAsk)}
-        </td>
-        <td className="num">{pts(p.divergence)}</td>
-        <td className={`num ${edge === null ? "" : edge > 0 ? "pos" : edge < 0 ? "neg" : ""}`}>{edge === null ? "–" : cents(edge)}</td>
-        <td className="num">{p.best ? p.best.contracts.toLocaleString() : "–"}</td>
-        <td className={`num ${p.best ? "pos" : ""}`}>{p.best ? usd(p.best.profit) : "–"}</td>
-        <td className="num">{p.best?.annualizedReturn != null ? pct(p.best.annualizedReturn, 0) : "–"}</td>
-        <td className="num">{shortDate(close)}</td>
-      </tr>
-      {open && (
-        <tr className="detail" id={detailId}>
-          <td colSpan={10}>
-            <div className="detail-grid">
-              <div>
-                <h4>Trade</h4>
-                {p.best ? (
-                  <>
-                    <div>{DIRECTION_LABEL[p.best.direction]}</div>
-                    <div className="small muted">
-                      Cost {usd(p.best.cost)} + fees {usd(p.best.fees)} → pays {usd(p.best.contracts)} at resolution
-                    </div>
-                    {legs.map((leg) => (
-                      <div key={leg.key} className="leg">
-                        <div className="small">
-                          <span className={`venue ${leg.venue === "kalshi" ? "k" : "p"}`}>{leg.venue === "kalshi" ? "K" : "P"}</span>
-                          Buy {leg.side} · {fmtQty(leg.size)} contracts · avg {cents(leg.avg)}
-                        </div>
-                        <ul className="mono">
-                          {leg.fills.map((f) => (
-                            <li key={f.price}>
-                              {fmtQty(f.size)} @ {cents(f.price)}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </>
-                ) : (
-                  <div className="muted small">
-                    No executable trade: the cheapest YES + NO across venues costs more than $1 after fees.
-                  </div>
-                )}
-              </div>
-              <div>
-                <h4>Check before trading</h4>
-                <ul className="small">
-                  {p.flags.map((f, i) => (
-                    <li key={i}>{f}</li>
-                  ))}
-                  {p.llm && <li>LLM check: {p.llm.note}</li>}
-                  <li>Resolution rules and sources can differ even when titles match.</li>
-                </ul>
-              </div>
-              <div>
-                <h4>Contracts</h4>
-                <div className="small">
-                  <a href={p.kalshi.url} target="_blank" rel="noreferrer">
-                    Kalshi · {p.kalshi.id}
-                  </a>
-                  <br />
-                  <a href={p.polymarket.url} target="_blank" rel="noreferrer">
-                    Polymarket · {p.polymarket.title}
-                  </a>
-                  <br />
-                  <span className="muted">
-                    Fees: Kalshi {feeLabel(p.kalshi.fee.kind === "kalshi" ? p.kalshi.fee.coeff : 0)} · Polymarket{" "}
-                    {feeLabel(p.polymarket.fee.kind === "polymarket" ? p.polymarket.fee.rate : 0)}
-                  </span>
-                </div>
-              </div>
+              ))}
             </div>
-          </td>
-        </tr>
-      )}
-    </Fragment>
+          )}
+        </div>
+        <Quote label="Kalshi YES" bid={p.kalshi.yesBid} ask={p.kalshi.yesAsk} />
+        <Quote label="Polymarket YES" bid={p.polymarket.yesBid} ask={p.polymarket.yesAsk} />
+        <div className="c-bar" data-label="Cost of a $1 pair">
+          {b ? <DollarBar b={b} size="mini" /> : <span className="muted small">No quotes</span>}
+        </div>
+        <span
+          className={`num ${b && b.exact && b.edge > 0 ? "edge-pos" : "muted"}`}
+          data-label="Left per pair"
+          title={b && !b.exact ? "At the best price on each book; no whole-contract trade clears fees" : undefined}
+        >
+          {b ? `${b.edge < 0 ? "−" : ""}${c(Math.abs(b.edge), 2)}` : "–"}
+        </span>
+        <span className="num" data-label="Size">
+          {p.best ? p.best.contracts.toLocaleString() : "–"}
+        </span>
+        <span className={`num${p.best ? " edge-pos" : " muted"}`} data-label="Profit">
+          {p.best ? usd(p.best.profit) : "–"}
+        </span>
+        <span className="num" data-label="Annualized">
+          {p.best?.annualizedReturn != null ? pct(p.best.annualizedReturn, 0) : "–"}
+        </span>
+        <span className="num c-close" data-label="Closes">
+          {shortDate(close)}
+        </span>
+      </div>
+      {open && <Detail id={detailId} pair={p} b={b} />}
+    </div>
+  );
+}
+
+function Quote({ label, bid, ask }: { label: string; bid: number | null; ask: number | null }) {
+  return (
+    <span className="num quote" data-label={label}>
+      {cents(ask)}
+      <small>bid {cents(bid)}</small>
+    </span>
+  );
+}
+
+function Detail({ id, pair: p, b }: { id: string; pair: PairResult; b: Breakdown | null }) {
+  const legs = p.best ? groupFills(p.best.fills) : [];
+  return (
+    <div className="detail" id={id}>
+      <div>
+        <h3>{p.best ? "The trade" : "Why there's no trade"}</h3>
+        {p.best ? (
+          <>
+            <p style={{ margin: 0 }}>
+              {usd(p.best.cost)} in contracts plus {usd(p.best.fees)} in fees, paying {usd(p.best.contracts)} at
+              resolution.
+            </p>
+            {legs.map((leg) => (
+              <table className="ladder" key={leg.key}>
+                <thead>
+                  <tr>
+                    <th className={leg.venue === "kalshi" ? "venue-k" : "venue-p"}>
+                      Buy {leg.side} on {leg.venue === "kalshi" ? "Kalshi" : "Polymarket"}
+                    </th>
+                    <th>avg {cents(leg.avg)}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leg.fills.map((f) => (
+                    <tr key={f.price}>
+                      <td>{f.size.toLocaleString()} contracts</td>
+                      <td>at {cents(f.price)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ))}
+          </>
+        ) : (
+          <p style={{ margin: 0 }}>
+            {b
+              ? `The cheapest pair, ${legLabel(b.legs[0])} plus ${legLabel(b.legs[1])}, costs about ${c(1 - b.edge)} with fees, ${b.edge < 0 ? "more than" : "about"} the $1 it pays.`
+              : "One venue has no quotes on the side needed."}
+          </p>
+        )}
+      </div>
+      <div>
+        <h3>Check before trading</h3>
+        <ul>
+          {p.flags.map((f, i) => (
+            <li key={i}>{f}</li>
+          ))}
+          {p.llm && <li>LLM check: {p.llm.note}</li>}
+          <li>Read both resolution rules. A different source, deadline, or fallback clause turns this into two separate bets.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Contracts</h3>
+        <p style={{ margin: "0 0 6px" }}>
+          <a href={p.kalshi.url} target="_blank" rel="noreferrer" className="venue-k">
+            Kalshi
+          </a>{" "}
+          {p.kalshi.title}
+        </p>
+        <p style={{ margin: "0 0 6px" }}>
+          <a href={p.polymarket.url} target="_blank" rel="noreferrer" className="venue-p">
+            Polymarket
+          </a>{" "}
+          {p.polymarket.title}
+        </p>
+        <p className="muted" style={{ margin: 0 }}>
+          Match score {p.score.toFixed(2)}. Fees: Kalshi {feeLabel(p.kalshi.fee.kind === "kalshi" ? p.kalshi.fee.coeff : 0)},
+          Polymarket {feeLabel(p.polymarket.fee.kind === "polymarket" ? p.polymarket.fee.rate : 0)}.
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -281,30 +350,25 @@ function feeLabel(coeff: number): string {
   return coeff > 0 ? `${+(coeff * 100).toFixed(2)}% × P(1−P)` : "none";
 }
 
-function fmtQty(x: number): string {
-  return x.toLocaleString("en-US", { maximumFractionDigits: 2 });
+function isStale(iso: string): boolean {
+  const t = Date.parse(iso);
+  return Number.isFinite(t) && Date.now() - t > 2 * 3600_000;
 }
 
-type Leg = { key: string; venue: string; side: string; size: number; avg: number; fills: { price: number; size: number }[] };
+type LegFills = { key: string; venue: string; side: string; avg: number; fills: { price: number; size: number }[] };
 
-/** One block per leg (venue + side), price levels ascending, with the size-weighted average price. */
-function groupFills(fills: { venue: string; side: string; price: number; size: number }[]): Leg[] {
-  const legs = new Map<string, Leg>();
+function groupFills(fills: { venue: string; side: string; price: number; size: number }[]): LegFills[] {
+  const legs = new Map<string, LegFills & { size: number }>();
   for (const f of fills) {
     const key = `${f.venue}|${f.side}`;
-    const leg = legs.get(key) ?? { key, venue: f.venue, side: f.side, size: 0, avg: 0, fills: [] };
+    const leg = legs.get(key) ?? { key, venue: f.venue, side: f.side, avg: 0, size: 0, fills: [] };
     leg.fills.push({ price: f.price, size: f.size });
     leg.size += f.size;
     legs.set(key, leg);
   }
-  for (const leg of legs.values()) {
-    leg.fills.sort((a, b) => a.price - b.price);
-    leg.avg = leg.fills.reduce((s, f) => s + f.price * f.size, 0) / leg.size;
-  }
-  return [...legs.values()];
-}
-
-function isStale(iso: string): boolean {
-  const t = Date.parse(iso);
-  return Number.isFinite(t) && Date.now() - t > 2 * 3600_000;
+  return [...legs.values()].map((leg) => ({
+    ...leg,
+    fills: leg.fills.sort((a, b) => a.price - b.price),
+    avg: leg.fills.reduce((s, f) => s + f.price * f.size, 0) / leg.size,
+  }));
 }

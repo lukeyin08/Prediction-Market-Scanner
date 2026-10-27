@@ -4,7 +4,7 @@ export default function Methodology() {
   return (
     <div className="prose">
       <h1>Method</h1>
-      <p className="sub">What the scanner computes, and where it can be wrong.</p>
+      <p className="lede">What the scanner computes, and where it can be wrong.</p>
 
       <h2>1. Pull live binary contracts</h2>
       <p>

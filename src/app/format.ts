@@ -14,7 +14,7 @@ export const pts = (x: number | null | undefined) => (ok(x) ? `${x > 0 ? "+" : "
 export function shortDate(iso: string | null | undefined): string {
   const t = iso ? Date.parse(iso) : NaN;
   return Number.isFinite(t)
-    ? new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" })
+    ? new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : "–";
 }
 
