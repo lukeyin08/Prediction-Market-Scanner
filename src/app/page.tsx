@@ -89,6 +89,7 @@ export default function LivePage() {
 
       {error && <div className="notice warn">Couldn&apos;t load the scan: {error}</div>}
       {scan?.errors?.length ? <div className="notice warn">Partial data: {scan.errors.join("; ")}</div> : null}
+      {scan?.warnings?.length ? <p className="muted small">Limits: {scan.warnings.join("; ")}</p> : null}
 
       <div className="table-wrap">
         <table>

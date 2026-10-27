@@ -7,5 +7,6 @@
  * 2: resolution-shape, bounds, label and topic constraints
  * 3: whole-contract book walk, best rounded-fee prefix, conservative fee lookups
  * 4: date/negation/party/critical-word constraints, stricter numbers and paths
+ * 5: reject dated vs undated pairs; gentler Kalshi book fetching
  */
-export const SCANNER_VERSION = 4;
+export const SCANNER_VERSION = 5;

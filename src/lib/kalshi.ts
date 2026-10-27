@@ -144,8 +144,10 @@ function round4(x: number): number {
 }
 
 export async function fetchKalshiBook(ticker: string, signal?: AbortSignal): Promise<Book> {
+  // Book requests come in bursts and Kalshi rate-limits (~20 req/s), so allow a few 429 retries.
   const data = await fetchJson<OrderbookResponse>(`${KALSHI_BASE}/markets/${encodeURIComponent(ticker)}/orderbook`, {
     signal,
+    retries: 3,
   });
   const ob = data.orderbook_fp ?? {};
   return kalshiBookFromBids(ob.yes_dollars ?? [], ob.no_dollars ?? []);
@@ -158,7 +160,7 @@ export async function fetchKalshiBooks(
 ): Promise<{ books: Map<string, Book>; failed: number }> {
   const books = new Map<string, Book>();
   let failed = 0;
-  await mapLimit(tickers, opts.concurrency ?? 8, async (t) => {
+  await mapLimit(tickers, opts.concurrency ?? 5, async (t) => {
     if (opts.signal?.aborted) {
       failed += 1;
       return;

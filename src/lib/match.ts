@@ -138,6 +138,16 @@ export function constrain(
   // Dates: "before Nov 1" and "by Oct 31" are normalized to the same day. A
   // different day or month is a different contract (daily/weekly series, the
   // October vs December Fed meeting).
+  // A specific deadline on one side with no date, month, or year on the other:
+  // venues often list one contract per deadline ("delayed before Dec 18"),
+  // and an undated contract can't be assumed to share that deadline.
+  for (const [a, b] of [
+    [k, p],
+    [p, k],
+  ] as const) {
+    if (a.f.dates.length && !b.f.dates.length && !b.f.months.length && !b.f.years.length) return null;
+  }
+
   // Date sets must be identical: "Oct 24 to Oct 26" vs "Oct 26 to Oct 28" share a day but differ.
   if (k.f.dates.length && p.f.dates.length && k.f.dates.join() !== p.f.dates.join()) return null;
   if (k.f.months.length && p.f.months.length && !k.f.months.some((m) => p.f.months.includes(m))) return null;

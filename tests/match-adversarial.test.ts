@@ -101,6 +101,12 @@ describe("matcher rejects look-alike contracts", () => {
     expect(matchMarkets(k, p, LOW)).toHaveLength(0);
   });
 
+  it("a dated contract vs an undated one", () => {
+    const k = [m("kalshi", "Will Shrek 5 be delayed?", "Will Shrek 5 be delayed?", DEC, "Before Jul 1, 2027")];
+    const p = [m("polymarket", "Will Shrek 5 be delayed?", "Will Shrek 5 be delayed?", DEC)];
+    expect(matchMarkets(k, p, LOW)).toHaveLength(0);
+  });
+
   it("clock times are not thresholds", () => {
     expect(extractFeatures("Bitcoin above $100,000 at 11:59 PM ET on Dec 31").numbers).toEqual([100000]);
     expect(extractFeatures("Settles at 12:00am").numbers).toEqual([]);

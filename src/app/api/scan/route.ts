@@ -48,11 +48,13 @@ async function loadSnapshot(): Promise<ScanResult | null> {
 }
 
 /**
- * GET /api/scan   live scan, cached at the edge for 2 minutes.
+ * GET /api/scan
  *
- * Any query string redirects to the bare URL so the CDN cache can't be
- * bypassed (each uncached request would run ~200 upstream calls). A scan that
- * is incomplete or runs out of time falls back to the last scheduled snapshot.
+ * Serves the latest scheduled snapshot (a full-coverage scan runs every 30
+ * minutes in GitHub Actions and takes ~2 minutes, longer than a serverless
+ * request should). Only if no snapshot exists does it attempt a time-boxed
+ * live scan. Any query string redirects to the bare URL so the CDN cache
+ * can't be bypassed.
  */
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -60,26 +62,21 @@ export async function GET(req: Request) {
     return Response.redirect(new URL(url.pathname, url.origin), 308);
   }
 
-  let live: ScanResult | null = null;
-  try {
-    live = await runScan({ deadlineMs: SCAN_DEADLINE_MS });
-    if (live.complete && live.stats.matchedPairs > 0) {
-      return Response.json(slim(live), { headers: { "cache-control": CACHE } });
-    }
-  } catch {
-    live = null;
-  }
-
   const snapshot = await loadSnapshot();
   if (snapshot) {
-    const note = live ? [`Live scan incomplete (${live.errors.join("; ") || "no pairs"}); showing last snapshot.`] : [];
-    return Response.json(slim({ ...snapshot, errors: [...note, ...snapshot.errors] }), {
-      headers: { "cache-control": CACHE },
-    });
+    return Response.json(slim(snapshot), { headers: { "cache-control": CACHE } });
   }
-  if (live && live.stats.matchedPairs > 0) {
-    // Partial live data beats nothing; cache briefly.
-    return Response.json(slim(live), { headers: { "cache-control": "public, s-maxage=30" } });
+
+  try {
+    const live = await runScan({ deadlineMs: SCAN_DEADLINE_MS, maxPairs: 150 });
+    if (live.stats.matchedPairs > 0) {
+      const note = live.complete ? [] : ["Live scan was time-boxed and may be partial."];
+      return Response.json(slim({ ...live, warnings: [...(live.warnings ?? []), ...note] }), {
+        headers: { "cache-control": "public, s-maxage=60" },
+      });
+    }
+  } catch {
+    // fall through
   }
-  return Response.json({ error: "Live scan failed and no snapshot is available yet." }, { status: 502 });
+  return Response.json({ error: "No snapshot is available yet and the live scan failed." }, { status: 502 });
 }
