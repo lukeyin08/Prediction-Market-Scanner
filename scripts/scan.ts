@@ -8,7 +8,7 @@ import { runScan } from "../src/lib/scan";
 const pct = (x: number | null | undefined) => (x === null || x === undefined ? "  -  " : `${(x * 100).toFixed(1)}`);
 
 async function main() {
-  const scan = await runScan();
+  const scan = await runScan({ deadlineMs: 5 * 60_000 });
   if (process.argv.includes("--json")) {
     console.log(JSON.stringify(scan, null, 2));
     return;
@@ -19,6 +19,7 @@ async function main() {
   );
   console.log(`Matched ${s.matchedPairs} pairs, ${s.opportunities} with positive edge after fees ($${s.executableProfit} executable)\n`);
   for (const e of scan.errors) console.log(`! ${e}`);
+  if (!s.kalshiMarkets && !s.polymarketMarkets) process.exitCode = 1;
 
   for (const p of scan.pairs.slice(0, 25)) {
     const b = p.best;

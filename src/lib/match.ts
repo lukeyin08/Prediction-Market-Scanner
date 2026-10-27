@@ -1,13 +1,6 @@
 import { extractFeatures, type Features } from "./normalize";
 import type { BinaryMarket, MatchedPair } from "./types";
 
-/**
- * Bump whenever matching rules change. Persistence analysis only compares
- * snapshots made by the current matcher, so a rule change never mixes old
- * false matches into new statistics.
- */
-export const MATCHER_VERSION = 2;
-
 export interface MatchOptions {
   /** Minimum final score to accept a pair. */
   threshold?: number;

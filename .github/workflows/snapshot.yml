@@ -19,7 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # Don't leave a write token in .git/config while dependencies install.
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -30,8 +33,8 @@ jobs:
 
       - name: Check out data branch
         run: |
-          git fetch origin data:data 2>/dev/null || true
-          if git show-ref --verify --quiet refs/heads/data; then
+          if git ls-remote --exit-code origin refs/heads/data >/dev/null; then
+            git fetch --depth=1 origin data:data
             git worktree add data-branch data
           else
             git worktree add --detach data-branch
@@ -46,14 +49,33 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: npm run snapshot -- --out data-branch/snapshots
 
-      - name: Analyze persistence
-        run: npm run analyze -- --dir data-branch/snapshots --out data-branch/analysis.json
-
+      # Commit the raw snapshot first so a later failure can't lose it.
       - name: Commit snapshot
         run: |
           cd data-branch
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "snapshot $(date -u +%Y-%m-%dT%H:%MZ)" || exit 0
-          git push origin data
+          git commit -q -m "snapshot $(date -u +%Y-%m-%dT%H:%MZ)" || echo "nothing to commit"
+
+      - name: Analyze persistence
+        continue-on-error: true
+        run: |
+          npm run analyze -- --dir data-branch/snapshots --out data-branch/analysis.json
+          cd data-branch
+          git add analysis.json
+          git commit -q --amend --no-edit || true
+
+      - name: Push
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          cd data-branch
+          remote="https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          for attempt in 1 2 3; do
+            if git push "$remote" HEAD:data; then exit 0; fi
+            echo "push rejected; rebasing onto the latest data branch (attempt $attempt)"
+            git fetch --depth=20 "$remote" data
+            git rebase FETCH_HEAD || { git rebase --abort; exit 1; }
+          done
+          exit 1

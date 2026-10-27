@@ -1,8 +1,11 @@
 export interface FetchJsonOptions {
   method?: "GET" | "POST";
   body?: unknown;
+  /** Per-attempt timeout. */
   timeoutMs?: number;
   retries?: number;
+  /** Overall deadline shared by every request in a scan. */
+  signal?: AbortSignal;
 }
 
 export class HttpError extends Error {
@@ -15,15 +18,35 @@ export class HttpError extends Error {
   }
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const MAX_RETRY_AFTER_MS = 2_000;
 
-/** JSON fetch with a timeout and retry with backoff on 429/5xx and network errors. */
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(signal.reason);
+    const t = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(t);
+        reject(signal.reason);
+      },
+      { once: true },
+    );
+  });
+}
+
+/**
+ * JSON fetch with a per-attempt timeout, a capped retry on 429/5xx/network
+ * errors, and an optional shared deadline. Defaults are tuned so a scan of a
+ * few hundred requests can never outlive a serverless function's time limit.
+ */
 export async function fetchJson<T>(url: string, opts: FetchJsonOptions = {}): Promise<T> {
-  const retries = opts.retries ?? 3;
+  const retries = opts.retries ?? 1;
   let lastError: unknown;
   for (let attempt = 0; attempt <= retries; attempt++) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 15_000);
+    if (opts.signal?.aborted) throw opts.signal.reason ?? new Error("deadline exceeded");
+    const timeout = AbortSignal.timeout(opts.timeoutMs ?? 8_000);
+    const signal = opts.signal ? AbortSignal.any([timeout, opts.signal]) : timeout;
     try {
       const res = await fetch(url, {
         method: opts.method ?? "GET",
@@ -33,21 +56,20 @@ export async function fetchJson<T>(url: string, opts: FetchJsonOptions = {}): Pr
           "user-agent": "prediction-market-scanner/0.1 (+https://github.com/lukeyin08/prediction-market-scanner)",
         },
         body: opts.body ? JSON.stringify(opts.body) : undefined,
-        signal: controller.signal,
+        signal,
         cache: "no-store",
       });
       if (res.ok) return (await res.json()) as T;
-      const retryable = res.status === 429 || res.status >= 500;
       lastError = new HttpError(res.status, url, `${res.status} ${res.statusText} for ${url}`);
-      if (!retryable) throw lastError;
+      if (res.status !== 429 && res.status < 500) throw lastError;
       const retryAfter = Number(res.headers.get("retry-after"));
-      await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 400 * 2 ** attempt);
+      const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 300 * 2 ** attempt;
+      if (attempt < retries) await sleep(Math.min(wait, MAX_RETRY_AFTER_MS), opts.signal);
     } catch (err) {
       if (err instanceof HttpError && err.status < 500 && err.status !== 429) throw err;
+      if (opts.signal?.aborted) throw opts.signal.reason ?? err;
       lastError = err;
-      await sleep(400 * 2 ** attempt);
-    } finally {
-      clearTimeout(timer);
+      if (attempt < retries) await sleep(300 * 2 ** attempt, opts.signal);
     }
   }
   throw lastError instanceof Error ? lastError : new Error(String(lastError));
@@ -71,4 +93,8 @@ export function num(x: unknown): number | null {
   if (x === null || x === undefined || x === "") return null;
   const n = typeof x === "number" ? x : Number(x);
   return Number.isFinite(n) ? n : null;
+}
+
+export function errorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
 }

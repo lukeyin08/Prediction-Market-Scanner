@@ -38,7 +38,7 @@ The first version matched contracts on text similarity and reported 111 pairs an
 | "Best *coding* model at end of 2026: Google" vs "Google best AI model end of 2026?" | different leaderboards |
 | "Anthropic officially *announces* an IPO" vs "Anthropic IPO by Nov 15?" | announcement vs completion |
 
-Each pattern became a hard constraint with a regression test (`tests/match.test.ts`), and `npm run eval` replays the matcher on a full market dump for review. `MATCHER_VERSION` is stamped on every snapshot so persistence statistics never mix in pairs from an older matcher.
+Each pattern became a hard constraint with a regression test (`tests/match.test.ts`), and `npm run eval` replays the matcher on a full market dump for review. `SCANNER_VERSION` (matcher + pricing) is stamped on every snapshot so persistence statistics never mix results from older logic.
 
 ## Fee model
 

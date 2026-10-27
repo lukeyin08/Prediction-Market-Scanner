@@ -17,6 +17,10 @@ export interface ScanOptions {
   kalshiPages?: number;
   polymarketPages?: number;
   now?: Date;
+  /** Abort every outstanding request after this many ms and return what was gathered. */
+  deadlineMs?: number;
+  /** Run the optional LLM equivalence check (costs API calls; off for user-facing requests). */
+  verify?: boolean;
 }
 
 const DAY_MS = 86_400_000;
@@ -80,33 +84,37 @@ function round(x: number, dp: number): number {
 export async function runScan(opts: ScanOptions = {}): Promise<ScanResult> {
   const started = Date.now();
   const now = (opts.now ?? new Date()).getTime();
-  const errors: string[] = [];
+  // One shared deadline for every request, so a slow venue can't outlive the caller's time limit.
+  const signal = opts.deadlineMs ? AbortSignal.timeout(opts.deadlineMs) : undefined;
 
-  const [kalshiAll, polyAll] = await Promise.all([
-    fetchKalshiMarkets({ maxPages: opts.kalshiPages }).catch((e) => {
-      errors.push(`Kalshi markets: ${String(e?.message ?? e)}`);
-      return [] as BinaryMarket[];
-    }),
-    fetchPolymarketMarkets({ maxPages: opts.polymarketPages }).catch((e) => {
-      errors.push(`Polymarket markets: ${String(e?.message ?? e)}`);
-      return [] as BinaryMarket[];
-    }),
+  const [kRes, pRes] = await Promise.all([
+    fetchKalshiMarkets({ maxPages: opts.kalshiPages, signal }),
+    fetchPolymarketMarkets({ maxPages: opts.polymarketPages, signal }),
   ]);
+  const errors = [...kRes.errors, ...pRes.errors];
 
   const maxDays = opts.maxDaysToClose ?? 400;
   const minLiq = opts.minLiquidity ?? 50;
-  const kalshi = liveFilter(kalshiAll, now, maxDays, minLiq);
-  const poly = liveFilter(polyAll, now, maxDays, minLiq);
+  const kalshi = liveFilter(kRes.data, now, maxDays, minLiq);
+  const poly = liveFilter(pRes.data, now, maxDays, minLiq);
 
   const matched = matchMarkets(kalshi, poly).slice(0, opts.maxPairs ?? 150);
-  await verifyPairs(matched);
+  if (opts.verify) await verifyPairs(matched, { signal });
 
-  const [kalshiBooks, polyBooks] = await Promise.all([
-    fetchKalshiBooks(matched.map((p) => p.kalshi.id)),
-    fetchPolymarketBooks(matched.map((p) => p.polymarket)),
+  const [kBooks, pBooks] = await Promise.all([
+    fetchKalshiBooks(
+      matched.map((p) => p.kalshi.id),
+      { signal },
+    ),
+    fetchPolymarketBooks(
+      matched.map((p) => p.polymarket),
+      { signal },
+    ),
   ]);
+  if (kBooks.failed) errors.push(`Kalshi order books unavailable for ${kBooks.failed} of ${matched.length} pairs`);
+  if (pBooks.failed) errors.push(`Polymarket order books unavailable for ${pBooks.failed} of ${matched.length} pairs`);
 
-  const pairs = evaluateMatches(matched, kalshiBooks, polyBooks, { maxContracts: opts.maxContracts, now });
+  const pairs = evaluateMatches(matched, kBooks.books, pBooks.books, { maxContracts: opts.maxContracts, now });
   pairs.sort(
     (a, b) =>
       (b.best?.profit ?? 0) - (a.best?.profit ?? 0) ||
@@ -114,6 +122,7 @@ export async function runScan(opts: ScanOptions = {}): Promise<ScanResult> {
   );
 
   const opportunities = pairs.filter((p) => p.best);
+  const booksMissing = Math.max(kBooks.failed, pBooks.failed);
   return {
     generatedAt: new Date(now).toISOString(),
     stats: {
@@ -129,5 +138,7 @@ export async function runScan(opts: ScanOptions = {}): Promise<ScanResult> {
     },
     pairs,
     errors,
+    // Complete = both venues fully paged and nearly every matched pair has depth.
+    complete: !kRes.errors.length && !pRes.errors.length && booksMissing <= Math.max(2, matched.length * 0.1),
   };
 }

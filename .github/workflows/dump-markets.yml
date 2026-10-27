@@ -14,6 +14,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -21,6 +23,8 @@ jobs:
       - run: npm ci
       - run: npm run dump -- --out fixtures-out
       - name: Publish to fixtures branch
+        env:
+          TOKEN: ${{ github.token }}
         run: |
           gzip -9 fixtures-out/markets.json
           git worktree add --detach fixtures-branch
@@ -32,4 +36,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add markets.json.gz
           git commit -m "market dump $(date -u +%Y-%m-%dT%H:%MZ)"
-          git push -f origin fixtures
+          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" fixtures

@@ -2,8 +2,8 @@
  * Read every snapshot and measure how long cross-venue arbitrage survives.
  *   npm run analyze -- --dir data/snapshots --out data/analysis.json
  */
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { analyze, type Snapshot } from "../src/lib/history";
 
 function arg(name: string, fallback: string): string {
@@ -29,9 +29,11 @@ if (existsSync(dir)) {
 }
 
 const result = analyze(snapshots);
-writeFileSync(out, JSON.stringify(result, null, 2));
+mkdirSync(dirname(out), { recursive: true });
+writeFileSync(out, JSON.stringify(result));
 const s = result.summary;
 console.log(
-  `${result.scans} scans, ${s.pairsSeen} pairs seen, ${s.pairsEverArbitrageable} ever arbitrageable, ` +
-    `${s.episodes} episodes (median ${s.medianDurationMin?.toFixed(0) ?? "-"} min) -> ${out}`,
+  `${result.scans} scans (v${result.scannerVersion}; ${result.skippedOldVersion} older skipped), ` +
+    `${s.pairsSeen} pairs seen, ${s.pairsEverArbitrageable} ever arbitrageable, ` +
+    `${s.episodes} episodes (${s.completed} completed, median >= ${s.medianDurationMin?.toFixed(0) ?? "-"} min) -> ${out}`,
 );

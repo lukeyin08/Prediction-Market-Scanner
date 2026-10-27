@@ -1,5 +1,5 @@
 import { KALSHI_DEFAULT_COEFF, KALSHI_SERIES_COEFF } from "./fees";
-import { fetchJson, mapLimit, num } from "./http";
+import { errorMessage, fetchJson, mapLimit, num } from "./http";
 import type { BinaryMarket, Book, Level } from "./types";
 
 export const KALSHI_BASE = process.env.KALSHI_API_BASE ?? "https://api.elections.kalshi.com/trade-api/v2";
@@ -86,14 +86,29 @@ export function normalizeKalshiMarket(ev: KalshiEventRaw, m: KalshiMarketRaw): B
   };
 }
 
-export async function fetchKalshiMarkets(opts: { maxPages?: number } = {}): Promise<BinaryMarket[]> {
+export interface FetchResult<T> {
+  data: T;
+  errors: string[];
+}
+
+/** Page through open events. A failed page stops pagination but keeps everything fetched so far. */
+export async function fetchKalshiMarkets(
+  opts: { maxPages?: number; signal?: AbortSignal } = {},
+): Promise<FetchResult<BinaryMarket[]>> {
   const out: BinaryMarket[] = [];
+  const errors: string[] = [];
   let cursor: string | undefined;
   const maxPages = opts.maxPages ?? 40;
   for (let page = 0; page < maxPages; page++) {
     const qs = new URLSearchParams({ status: "open", with_nested_markets: "true", limit: "200" });
     if (cursor) qs.set("cursor", cursor);
-    const data = await fetchJson<EventsPage>(`${KALSHI_BASE}/events?${qs}`);
+    let data: EventsPage;
+    try {
+      data = await fetchJson<EventsPage>(`${KALSHI_BASE}/events?${qs}`, { signal: opts.signal });
+    } catch (e) {
+      errors.push(`Kalshi events page ${page + 1}: ${errorMessage(e)}`);
+      break;
+    }
     for (const ev of data.events ?? []) {
       for (const m of ev.markets ?? []) {
         const bm = normalizeKalshiMarket(ev, m);
@@ -102,8 +117,9 @@ export async function fetchKalshiMarkets(opts: { maxPages?: number } = {}): Prom
     }
     cursor = data.cursor || undefined;
     if (!cursor || !(data.events ?? []).length) break;
+    if (page === maxPages - 1) errors.push(`Kalshi pagination cap reached (${maxPages} pages)`);
   }
-  return out;
+  return { data: out, errors };
 }
 
 /**
@@ -123,20 +139,31 @@ function round4(x: number): number {
   return Math.round(x * 1e4) / 1e4;
 }
 
-export async function fetchKalshiBook(ticker: string): Promise<Book> {
-  const data = await fetchJson<OrderbookResponse>(`${KALSHI_BASE}/markets/${encodeURIComponent(ticker)}/orderbook`);
+export async function fetchKalshiBook(ticker: string, signal?: AbortSignal): Promise<Book> {
+  const data = await fetchJson<OrderbookResponse>(`${KALSHI_BASE}/markets/${encodeURIComponent(ticker)}/orderbook`, {
+    signal,
+  });
   const ob = data.orderbook_fp ?? {};
   return kalshiBookFromBids(ob.yes_dollars ?? [], ob.no_dollars ?? []);
 }
 
-export async function fetchKalshiBooks(tickers: string[], concurrency = 6): Promise<Map<string, Book>> {
+/** Fetch many books; failures are counted, not hidden, so the scan can report missing depth. */
+export async function fetchKalshiBooks(
+  tickers: string[],
+  opts: { concurrency?: number; signal?: AbortSignal } = {},
+): Promise<{ books: Map<string, Book>; failed: number }> {
   const books = new Map<string, Book>();
-  await mapLimit(tickers, concurrency, async (t) => {
+  let failed = 0;
+  await mapLimit(tickers, opts.concurrency ?? 8, async (t) => {
+    if (opts.signal?.aborted) {
+      failed += 1;
+      return;
+    }
     try {
-      books.set(t, await fetchKalshiBook(t));
+      books.set(t, await fetchKalshiBook(t, opts.signal));
     } catch {
-      // A missing book just means we skip depth for this pair.
+      failed += 1;
     }
   });
-  return books;
+  return { books, failed };
 }

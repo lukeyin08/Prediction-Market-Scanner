@@ -15,7 +15,7 @@ function arg(name: string, fallback: string): string {
 
 async function main() {
   const outDir = arg("out", "data/snapshots");
-  const scan = await runScan();
+  const scan = await runScan({ verify: true, deadlineMs: 8 * 60_000 });
   const snap = toSnapshot(scan);
   mkdirSync(outDir, { recursive: true });
   const file = join(outDir, `${snap.t.slice(0, 10)}.jsonl`);
@@ -25,6 +25,7 @@ async function main() {
     `${snap.t}: ${scan.stats.matchedPairs} pairs, ${scan.stats.opportunities} opportunities -> ${file}` +
       (scan.errors.length ? `\nerrors: ${scan.errors.join("; ")}` : ""),
   );
+  if (!scan.complete) console.log("warning: incomplete scan (see errors)");
   if (scan.errors.length && !scan.stats.matchedPairs) process.exit(1);
 }
 

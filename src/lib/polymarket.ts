@@ -1,4 +1,5 @@
-import { fetchJson, num } from "./http";
+import { errorMessage, fetchJson, mapLimit, num } from "./http";
+import type { FetchResult } from "./kalshi";
 import type { BinaryMarket, Book, FeeModel, Level } from "./types";
 
 export const GAMMA_BASE = process.env.POLYMARKET_GAMMA_BASE ?? "https://gamma-api.polymarket.com";
@@ -97,30 +98,48 @@ export function normalizePolyMarket(ev: PolyEventRaw, m: PolyMarketRaw): BinaryM
   };
 }
 
-export async function fetchPolymarketMarkets(opts: { maxPages?: number; pageSize?: number } = {}): Promise<BinaryMarket[]> {
+/**
+ * Page through every active event. Gamma may return fewer rows than requested,
+ * so advance the offset by what actually came back and stop only on an empty
+ * page. Hitting the page cap is reported, since it means coverage is partial.
+ */
+export async function fetchPolymarketMarkets(
+  opts: { maxPages?: number; pageSize?: number; signal?: AbortSignal } = {},
+): Promise<FetchResult<BinaryMarket[]>> {
   const out: BinaryMarket[] = [];
+  const errors: string[] = [];
   const pageSize = opts.pageSize ?? 500;
-  const maxPages = opts.maxPages ?? 20;
-  for (let page = 0; page < maxPages; page++) {
+  const maxPages = opts.maxPages ?? 60;
+  let offset = 0;
+  let page = 0;
+  for (; page < maxPages; page++) {
     const qs = new URLSearchParams({
       active: "true",
       closed: "false",
       archived: "false",
       limit: String(pageSize),
-      offset: String(page * pageSize),
-      order: "volume24hr",
-      ascending: "false",
+      offset: String(offset),
+      order: "id",
+      ascending: "true",
     });
-    const events = await fetchJson<PolyEventRaw[]>(`${GAMMA_BASE}/events?${qs}`);
+    let events: PolyEventRaw[];
+    try {
+      events = await fetchJson<PolyEventRaw[]>(`${GAMMA_BASE}/events?${qs}`, { signal: opts.signal });
+    } catch (e) {
+      errors.push(`Polymarket events page ${page + 1}: ${errorMessage(e)}`);
+      break;
+    }
+    if (!Array.isArray(events) || !events.length) break;
     for (const ev of events) {
       for (const m of ev.markets ?? []) {
         const bm = normalizePolyMarket(ev, m);
         if (bm) out.push(bm);
       }
     }
-    if (events.length < pageSize) break;
+    offset += events.length;
   }
-  return out;
+  if (page === maxPages) errors.push(`Polymarket pagination cap reached (${maxPages} pages, ${offset} events)`);
+  return { data: out, errors };
 }
 
 export function toAsks(levels: { price: string; size: string }[] | undefined): Level[] {
@@ -130,24 +149,37 @@ export function toAsks(levels: { price: string; size: string }[] | undefined): L
     .sort((a, b) => a.price - b.price); // sort ourselves: don't rely on API ordering
 }
 
-/** Fetch Yes and No ask ladders for many markets via the batch /books endpoint. */
-export async function fetchPolymarketBooks(markets: BinaryMarket[], chunk = 40): Promise<Map<string, Book>> {
+/** Fetch Yes and No ask ladders for many markets via the batch /books endpoint (chunks run in parallel). */
+export async function fetchPolymarketBooks(
+  markets: BinaryMarket[],
+  opts: { chunk?: number; signal?: AbortSignal } = {},
+): Promise<{ books: Map<string, Book>; failed: number }> {
+  const chunk = opts.chunk ?? 40;
   const tokenIds = markets.flatMap((m) => [m.yesTokenId, m.noTokenId]).filter(Boolean) as string[];
+  const chunks: string[][] = [];
+  for (let i = 0; i < tokenIds.length; i += chunk) chunks.push(tokenIds.slice(i, i + chunk));
+
   const asksByToken = new Map<string, Level[]>();
-  for (let i = 0; i < tokenIds.length; i += chunk) {
-    const body = tokenIds.slice(i, i + chunk).map((token_id) => ({ token_id }));
+  await mapLimit(chunks, 4, async (ids) => {
     try {
-      const books = await fetchJson<ClobBook[]>(`${CLOB_BASE}/books`, { method: "POST", body });
+      const books = await fetchJson<ClobBook[]>(`${CLOB_BASE}/books`, {
+        method: "POST",
+        body: ids.map((token_id) => ({ token_id })),
+        signal: opts.signal,
+      });
       for (const b of books) asksByToken.set(b.asset_id, toAsks(b.asks));
     } catch {
-      // Leave these markets without depth; the scan reports them as unpriced.
+      // counted below as markets without a book
     }
-  }
-  const out = new Map<string, Book>();
+  });
+
+  const books = new Map<string, Book>();
+  let failed = 0;
   for (const m of markets) {
     const yes = m.yesTokenId ? asksByToken.get(m.yesTokenId) : undefined;
     const no = m.noTokenId ? asksByToken.get(m.noTokenId) : undefined;
-    if (yes || no) out.set(m.id, { yesAsks: yes ?? [], noAsks: no ?? [] });
+    if (yes || no) books.set(m.id, { yesAsks: yes ?? [], noAsks: no ?? [] });
+    else failed += 1;
   }
-  return out;
+  return { books, failed };
 }

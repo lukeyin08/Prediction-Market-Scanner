@@ -114,4 +114,8 @@ export interface ScanResult {
   stats: ScanStats;
   pairs: PairResult[];
   errors: string[];
+  /** False when a venue failed to page fully or many order books were missing. */
+  complete?: boolean;
+  /** Set by the API when serving the last scheduled snapshot instead of a live scan. */
+  fromSnapshot?: boolean;
 }

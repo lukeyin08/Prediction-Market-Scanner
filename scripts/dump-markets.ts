@@ -17,7 +17,10 @@ function arg(name: string, fallback: string): string {
 async function main() {
   const out = arg("out", "fixtures");
   const now = Date.now();
-  const [k, p] = await Promise.all([fetchKalshiMarkets(), fetchPolymarketMarkets()]);
+  const [kRes, pRes] = await Promise.all([fetchKalshiMarkets(), fetchPolymarketMarkets()]);
+  for (const e of [...kRes.errors, ...pRes.errors]) console.error(e);
+  const k = kRes.data;
+  const p = pRes.data;
   const kalshi = liveFilter(k, now, 400, 50);
   const poly = liveFilter(p, now, 400, 50);
   mkdirSync(out, { recursive: true });

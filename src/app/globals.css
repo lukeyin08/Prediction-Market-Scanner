@@ -354,3 +354,14 @@ tr.detail td {
 .contract strong {
   font-weight: 600;
 }
+
+.expand {
+  all: unset;
+  cursor: pointer;
+  font-weight: 600;
+  border-radius: 4px;
+}
+.expand:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

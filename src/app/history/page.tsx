@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { Analysis } from "@/lib/history";
+import { getJson } from "../fetch";
 import { DIRECTION_LABEL, minutes, pct, shortDate, usd } from "../format";
 
 export default function HistoryPage() {
@@ -10,12 +11,8 @@ export default function HistoryPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/history")
-      .then(async (r) => {
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error ?? `HTTP ${r.status}`);
-        setData(d);
-      })
+    getJson<Analysis>("/api/history")
+      .then(setData)
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
 
@@ -29,12 +26,24 @@ export default function HistoryPage() {
     <>
       <h1>How long does the edge last?</h1>
       <p className="sub">
-        A scheduled job scans both venues every 30 minutes and logs every matched pair. An episode is a run of
-        consecutive scans in which the same pair stayed profitable in the same direction. Durations are lower bounds: the
-        edge may have opened or closed between scans.
+        A scheduled job scans both venues every 30 minutes and logs every matched pair. An episode is a run of scans in
+        which the same pair stayed profitable in the same direction. It ends only when a scan prices the pair and finds
+        no edge; a missing pair or failed order book counts as a gap. Lifetimes are bracketed: the lower bound is first
+        to last profitable sighting, the upper bound is the flat scan before to the flat scan after. Episodes cut off by
+        the start or end of the data are excluded from lifetime statistics.
       </p>
 
       {error && <div className="notice">{error}</div>}
+      {!data && !error && (
+        <div className="stats">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div className="stat" key={i}>
+              <div className="skeleton" />
+              <div className="skeleton" style={{ height: 28, marginTop: 8 }} />
+            </div>
+          ))}
+        </div>
+      )}
 
       {data && (
         <>
@@ -42,14 +51,17 @@ export default function HistoryPage() {
             <Stat label="Scans logged" value={data.scans.toLocaleString()} />
             <Stat label="Pairs tracked" value={s!.pairsSeen.toLocaleString()} />
             <Stat label="Ever arbitrageable" value={s!.pairsEverArbitrageable.toLocaleString()} />
-            <Stat label="Episodes" value={s!.episodes.toLocaleString()} />
-            <Stat label="Median lifetime" value={minutes(s!.medianDurationMin)} />
+            <Stat label="Completed episodes" value={`${s!.completed} (${s!.openNow} open)`} />
+            <Stat
+              label="Median lifetime"
+              value={s!.completed ? `${minutes(s!.medianDurationMin)} – ${minutes(s!.medianUpperMin)}` : "–"}
+            />
             <Stat label="Gone by next scan" value={pct(s!.shareSingleScan, 0)} />
           </div>
           {data.scans < 4 ? (
             <div className="notice">
-              Collecting data: {data.scans} scan{data.scans === 1 ? "" : "s"} logged with the current matcher so far. The
-              job runs every 30 minutes; charts appear once there are a few hours of history.
+              Collecting data: {data.scans} scan{data.scans === 1 ? "" : "s"} logged with the current scanner version so
+              far. The job runs every 30 minutes; charts appear once there are a few hours of history.
             </div>
           ) : (
             <>
@@ -91,7 +103,7 @@ export default function HistoryPage() {
                   <th>Pair</th>
                   <th>Direction</th>
                   <th className="num">First seen</th>
-                  <th className="num">Lasted</th>
+                  <th className="num">Lasted (at least)</th>
                   <th className="num">Scans</th>
                   <th className="num">Peak profit</th>
                 </tr>
@@ -102,7 +114,10 @@ export default function HistoryPage() {
                     <td>{e.title}</td>
                     <td className="small muted">{DIRECTION_LABEL[e.direction] ?? e.direction}</td>
                     <td className="num">{shortDate(e.start)}</td>
-                    <td className="num">{e.observations === 1 ? "1 scan" : minutes(e.durationMin)}</td>
+                    <td className="num">
+                      {e.observations === 1 ? "1 scan" : minutes(e.durationMin)}
+                      {e.censored === "right" || e.censored === "both" ? " (still open)" : ""}
+                    </td>
                     <td className="num">{e.observations}</td>
                     <td className="num pos">{usd(e.peakProfit)}</td>
                   </tr>

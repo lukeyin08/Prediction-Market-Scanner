@@ -2,12 +2,13 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import type { PairResult, ScanResult } from "@/lib/types";
-import { DIRECTION_LABEL, cents, pct, pts, shortDate, timeAgo, usd } from "./format";
+import { getJson } from "./fetch";
+import { DIRECTION_LABEL, cents, earliestClose, pct, pts, shortDate, timeAgo, usd } from "./format";
 
 type View = "arb" | "divergence" | "all";
 
 export default function LivePage() {
-  const [scan, setScan] = useState<(ScanResult & { fromSnapshot?: boolean }) | null>(null);
+  const [scan, setScan] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<View>("arb");
@@ -17,10 +18,9 @@ export default function LivePage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/scan");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
-      setScan(data);
+      const data = await getJson<ScanResult>("/api/scan");
+      if (!data?.stats || !Array.isArray(data.pairs)) throw new Error("The scan response was malformed.");
+      setScan({ ...data, errors: Array.isArray(data.errors) ? data.errors : [] });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -54,9 +54,9 @@ export default function LivePage() {
       </p>
 
       <div className="stats">
-        <Stat label="Contracts scanned" value={s ? (s.kalshiMarkets + s.polymarketMarkets).toLocaleString() : null} />
-        <Stat label="Matched pairs" value={s ? s.matchedPairs.toLocaleString() : null} />
-        <Stat label="Positive edge after fees" value={s ? String(s.opportunities) : null} good={!!s?.opportunities} />
+        <Stat label="Contracts scanned" value={s ? ((s.kalshiMarkets ?? 0) + (s.polymarketMarkets ?? 0)).toLocaleString() : null} />
+        <Stat label="Matched pairs" value={s ? String(s.matchedPairs ?? 0) : null} />
+        <Stat label="Positive edge after fees" value={s ? String(s.opportunities ?? 0) : null} good={!!s?.opportunities} />
         <Stat label="Executable profit (all)" value={s ? usd(s.executableProfit) : null} good={!!s?.executableProfit} />
       </div>
 
@@ -71,21 +71,24 @@ export default function LivePage() {
           All pairs{s ? ` (${s.matchedPairs})` : ""}
         </button>
         <span className="spacer" />
+        {scan && isStale(scan.generatedAt) && (
+          <span className="pill warn" title="The scheduled snapshot job may have stopped">
+            stale
+          </span>
+        )}
         {scan && (
-          <span className="muted small">
-            {scan.fromSnapshot ? "Last scheduled snapshot, " : "Scanned "}
-            {timeAgo(scan.generatedAt)} in {(scan.stats.durationMs / 1000).toFixed(1)}s
+          <span className="muted small" title="Results are cached for up to 2 minutes">
+            {scan.fromSnapshot ? "Scheduled snapshot from " : "Scanned "}
+            {timeAgo(scan.generatedAt)}
           </span>
         )}
         <button className="btn" onClick={load} disabled={loading}>
-          {loading ? "Scanning…" : "Refresh"}
+          {loading ? "Loading…" : "Reload"}
         </button>
       </div>
 
-      {error && <div className="notice warn">Scan failed: {error}</div>}
-      {scan?.errors?.length ? (
-        <div className="notice warn">Partial data: {scan.errors.join("; ")}</div>
-      ) : null}
+      {error && <div className="notice warn">Couldn&apos;t load the scan: {error}</div>}
+      {scan?.errors?.length ? <div className="notice warn">Partial data: {scan.errors.join("; ")}</div> : null}
 
       <div className="table-wrap">
         <table>
@@ -100,7 +103,9 @@ export default function LivePage() {
               <th className="num">Size</th>
               <th className="num">Profit</th>
               <th className="num">Annualized</th>
-              <th className="num">Closes</th>
+              <th className="num" title="Earlier of the two venues' close times">
+                Closes
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -143,15 +148,27 @@ function Stat({ label, value, good }: { label: string; value: string | null; goo
 function Row({ pair: p, open, onToggle }: { pair: PairResult; open: boolean; onToggle: () => void }) {
   const top = p.alternatives[0];
   const edge = p.best?.topEdge ?? top?.topEdge ?? null;
-  const close = [p.kalshi.closeTime, p.polymarket.closeTime].sort()[0];
+  const close = earliestClose(p.kalshi.closeTime, p.polymarket.closeTime);
+  const detailId = `detail-${p.id.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
   const legs = p.best ? groupFills(p.best.fills) : [];
 
   return (
     <Fragment>
-      <tr className="row" onClick={onToggle} aria-expanded={open}>
+      <tr className="row" onClick={onToggle}>
         <td>
           <div className="contract">
-            {p.kalshi.subtitle && <strong>{p.kalshi.subtitle}</strong>}
+            <button
+              type="button"
+              className="expand"
+              aria-expanded={open}
+              aria-controls={detailId}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle();
+              }}
+            >
+              <span aria-hidden>{open ? "▾" : "▸"}</span> {p.kalshi.subtitle ?? "Details"}
+            </button>
             <span>
               <span className="venue k">K</span>
               {p.kalshi.subtitle ? p.kalshi.eventTitle : p.kalshi.title}
@@ -178,14 +195,14 @@ function Row({ pair: p, open, onToggle }: { pair: PairResult; open: boolean; onT
           {cents(p.polymarket.yesBid)} / {cents(p.polymarket.yesAsk)}
         </td>
         <td className="num">{pts(p.divergence)}</td>
-        <td className={`num ${edge !== null && edge > 0 ? "pos" : "neg"}`}>{edge === null ? "–" : cents(edge)}</td>
+        <td className={`num ${edge === null ? "" : edge > 0 ? "pos" : edge < 0 ? "neg" : ""}`}>{edge === null ? "–" : cents(edge)}</td>
         <td className="num">{p.best ? p.best.contracts.toLocaleString() : "–"}</td>
         <td className={`num ${p.best ? "pos" : ""}`}>{p.best ? usd(p.best.profit) : "–"}</td>
         <td className="num">{p.best?.annualizedReturn != null ? pct(p.best.annualizedReturn, 0) : "–"}</td>
         <td className="num">{shortDate(close)}</td>
       </tr>
       {open && (
-        <tr className="detail">
+        <tr className="detail" id={detailId}>
           <td colSpan={10}>
             <div className="detail-grid">
               <div>
@@ -221,8 +238,8 @@ function Row({ pair: p, open, onToggle }: { pair: PairResult; open: boolean; onT
               <div>
                 <h4>Check before trading</h4>
                 <ul className="small">
-                  {p.flags.map((f) => (
-                    <li key={f}>{f}</li>
+                  {p.flags.map((f, i) => (
+                    <li key={i}>{f}</li>
                   ))}
                   {p.llm && <li>LLM check: {p.llm.note}</li>}
                   <li>Resolution rules and sources can differ even when titles match.</li>
@@ -278,4 +295,9 @@ function groupFills(fills: { venue: string; side: string; price: number; size: n
     leg.avg = leg.fills.reduce((s, f) => s + f.price * f.size, 0) / leg.size;
   }
   return [...legs.values()];
+}
+
+function isStale(iso: string): boolean {
+  const t = Date.parse(iso);
+  return Number.isFinite(t) && Date.now() - t > 2 * 3600_000;
 }
