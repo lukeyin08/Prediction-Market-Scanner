@@ -1,6 +1,5 @@
 import { evaluatePair, midpoint } from "./arb";
 import { fetchKalshiBooks, fetchKalshiMarkets } from "./kalshi";
-import { verifyPairs } from "./llm";
 import { matchMarkets } from "./match";
 import { fetchPolymarketBooks, fetchPolymarketMarkets } from "./polymarket";
 import type { BinaryMarket, Book, MatchedPair, PairResult, ScanResult } from "./types";
@@ -19,8 +18,6 @@ export interface ScanOptions {
   now?: Date;
   /** Abort every outstanding request after this many ms and return what was gathered. */
   deadlineMs?: number;
-  /** Run the optional LLM equivalence check (costs API calls; off for user-facing requests). */
-  verify?: boolean;
 }
 
 const DAY_MS = 86_400_000;
@@ -57,8 +54,7 @@ export function evaluateMatches(
 
     const kalshiMid = midpoint(pair.kalshi.yesBid, pair.kalshi.yesAsk);
     const polyMid = midpoint(pair.polymarket.yesBid, pair.polymarket.yesAsk);
-    const llmRejects = pair.llm && !pair.llm.same;
-    const best = results[0] && results[0].profit > 0 && !llmRejects ? results[0] : null;
+    const best = results[0] && results[0].profit > 0 ? results[0] : null;
 
     return {
       id: pair.id,
@@ -66,7 +62,6 @@ export function evaluateMatches(
       polymarket: pair.polymarket,
       score: pair.score,
       flags: pair.flags,
-      llm: pair.llm,
       kalshiMid,
       polyMid,
       divergence: kalshiMid !== null && polyMid !== null ? round(kalshiMid - polyMid, 4) : null,
@@ -103,7 +98,6 @@ export async function runScan(opts: ScanOptions = {}): Promise<ScanResult> {
   const maxPairs = opts.maxPairs ?? 400;
   if (allMatched.length > maxPairs) warnings.push(`Pair cap reached: priced the top ${maxPairs} of ${allMatched.length} matches`);
   const matched = allMatched.slice(0, maxPairs);
-  if (opts.verify) await verifyPairs(matched, { signal });
 
   const [kBooks, pBooks] = await Promise.all([
     fetchKalshiBooks(

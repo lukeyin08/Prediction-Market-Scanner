@@ -17,7 +17,6 @@ If YES on one site plus NO on the other costs less than $1, you get $1 back at r
    - what kind of question it is: a range bucket vs a threshold, touching a level by a deadline vs the value on a date, one person vs a race ("next leader out"), an announcement vs the event
    - years, months, over/under, negation, party order ("D Senate, R House")
    - words that change resolution, like votes vs seats, nominee vs winner, "coding" model vs "AI" model, Q3 vs Q4
-   - optionally, an LLM reads both rule texts and vetoes pairs that don't resolve the same way. This is off unless `ANTHROPIC_API_KEY` is set, and it wasn't on for the published data.
 3. Price each pair against the order books. Walk both ask ladders together in whole contracts, keep the size with the most profit after fees, and report size, profit, and simple annualized return on the money tied up.
 4. Track gaps over time. A GitHub Action scans every 30 minutes and appends to the `data` branch. The history page turns that into episodes with a lower and upper bound on how long each gap lasted.
 
@@ -45,7 +44,6 @@ The first version matched on text similarity alone. It found 111 pairs and "$7.7
 | "Will Vladimir Putin leave President of Russia before Jan 1, 2027?" vs "Will Vladimir Putin be the next leader out before 2027?" | one person vs a race among many leaders |
 | "Fed decision: Cut >25bps" vs "Fed decreases rates by 25 bps" | ">25" means 50bp or more |
 | "Best coding model at end of 2026: Google" vs "Google best AI model end of 2026?" | different leaderboards |
-| "Anthropic officially announces an IPO" vs "Anthropic IPO by Nov 15?" | announcing vs completing |
 | December Fed "Cut 25bps" vs the October meeting's 25 bps cut (when December was missing) | different meeting, so month mismatches now reject |
 | "Fed decision: 25 bps cut" | "dec" was read as December and the 25 got dropped; months now only match whole words |
 | "Will Shrek 5 be delayed? (before Jul 1, 2027)" vs "Will Shrek 5 be delayed?" | one of several dated contracts vs an undated one |
@@ -92,7 +90,6 @@ src/lib/
   match.ts        TF-IDF matching, hard rules, mutual best match
   fees.ts         Kalshi and Polymarket fee schedules
   arb.ts          two-ladder book walk in whole contracts
-  llm.ts          optional LLM equivalence check
   scan.ts         full scan with a shared deadline
   history.ts      snapshots and episode analysis
   version.ts      SCANNER_VERSION

@@ -56,8 +56,6 @@ export interface MatchedPair {
   score: number;
   /** Human-readable caveats about whether these really resolve identically. */
   flags: string[];
-  /** Optional LLM equivalence check. */
-  llm?: { same: boolean; note: string };
 }
 
 export type Direction = "KALSHI_YES+POLY_NO" | "POLY_YES+KALSHI_NO";
@@ -91,7 +89,6 @@ export interface PairResult {
   polymarket: BinaryMarket;
   score: number;
   flags: string[];
-  llm?: { same: boolean; note: string };
   kalshiMid: number | null;
   polyMid: number | null;
   /** kalshiMid - polyMid, in probability points. */

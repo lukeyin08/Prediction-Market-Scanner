@@ -166,7 +166,6 @@ function Row({ pair: p, open, onToggle }: { pair: PairResult; open: boolean; onT
             <br />
             <span className="q">{h.context}</span>
           </button>
-          {p.llm && !p.llm.same && <div className="small error">LLM check says the rules differ</div>}
         </td>
         <td className="n">
           {cents(p.kalshi.yesAsk)}
@@ -243,7 +242,6 @@ function Detail({ pair: p, b }: { pair: PairResult; b: Breakdown | null }) {
           {p.flags.map((f, i) => (
             <li key={i}>{f}</li>
           ))}
-          {p.llm && <li>LLM check: {p.llm.note}</li>}
           <li>Resolution rules. A different source or deadline makes this two separate bets.</li>
         </ul>
       </div>

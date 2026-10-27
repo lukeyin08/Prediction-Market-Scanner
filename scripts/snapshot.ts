@@ -15,7 +15,7 @@ function arg(name: string, fallback: string): string {
 
 async function main() {
   const outDir = arg("out", "data/snapshots");
-  const scan = await runScan({ verify: true, deadlineMs: 8 * 60_000 });
+  const scan = await runScan({ deadlineMs: 8 * 60_000 });
   const snap = toSnapshot(scan);
   mkdirSync(outDir, { recursive: true });
   const file = join(outDir, `${snap.t.slice(0, 10)}.jsonl`);

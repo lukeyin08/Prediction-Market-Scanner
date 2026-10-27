@@ -25,9 +25,7 @@ export default function Methodology() {
       <p>
         Similarity is TF-IDF cosine, with IDF fit on both sites together. A pair is thrown out if any of those parts
         disagree, if a word that changes the resolution differs (votes vs seats, nominee vs winner), or if the close
-        dates are more than 45 days apart. It&apos;s kept only if each side is the other&apos;s best match. There&apos;s
-        also an optional LLM check, off unless <code>ANTHROPIC_API_KEY</code> is set, that reads both rule texts and
-        vetoes pairs that don&apos;t resolve the same way.
+        dates are more than 45 days apart. It&apos;s kept only if each side is the other&apos;s best match.
       </p>
 
       <h2>Pricing</h2>

@@ -99,8 +99,8 @@ describe("matchMarkets", () => {
   });
 
   it("never matches an announcement to the event itself", () => {
-    const k = [market("kalshi", "When will Anthropic officially announce an IPO?", "Will Anthropic announce an IPO before Nov 16, 2026?", close, "Before Nov 16, 2026")];
-    const p = [market("polymarket", "Anthropic IPO by...?", "Will Anthropic IPO by November 15, 2026?", close, "November 15, 2026")];
+    const k = [market("kalshi", "When will SpaceX officially announce an IPO?", "Will SpaceX announce an IPO before Nov 16, 2026?", close, "Before Nov 16, 2026")];
+    const p = [market("polymarket", "SpaceX IPO by...?", "Will SpaceX IPO by November 15, 2026?", close, "November 15, 2026")];
     expect(matchMarkets(k, p, { threshold: 0.3 })).toHaveLength(0);
   });
 

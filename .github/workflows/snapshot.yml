@@ -47,8 +47,6 @@ jobs:
           [ -f "$GITHUB_WORKSPACE/data-branch/vercel.json" ] || echo '{"git":{"deploymentEnabled":false}}' > "$GITHUB_WORKSPACE/data-branch/vercel.json"
 
       - name: Scan
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: npm run snapshot -- --out data-branch/snapshots
 
       # Commit the raw snapshot first so a later failure can't lose it.
