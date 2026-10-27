@@ -32,8 +32,9 @@ jobs:
           git checkout --orphan fixtures
           git rm -rf . >/dev/null 2>&1 || true
           cp ../fixtures-out/markets.json.gz .
+          echo '{"git":{"deploymentEnabled":false}}' > vercel.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add markets.json.gz
+          git add markets.json.gz vercel.json
           git commit -m "market dump $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" fixtures
