@@ -55,7 +55,7 @@ export default function LivePage() {
 
       <div className="stats">
         <Stat label="Contracts scanned" value={s ? ((s.kalshiMarkets ?? 0) + (s.polymarketMarkets ?? 0)).toLocaleString() : null} />
-        <Stat label="Matched pairs" value={s ? String(s.matchedPairs ?? 0) : null} />
+        <Stat label="Pairs priced" value={s ? String(s.matchedPairs ?? 0) : null} />
         <Stat label="Positive edge after fees" value={s ? String(s.opportunities ?? 0) : null} good={!!s?.opportunities} />
         <Stat label="Executable profit (all)" value={s ? usd(s.executableProfit) : null} good={!!s?.executableProfit} />
       </div>
@@ -88,7 +88,13 @@ export default function LivePage() {
       </div>
 
       {error && <div className="notice warn">Couldn&apos;t load the scan: {error}</div>}
-      {scan?.errors?.length ? <div className="notice warn">Partial data: {scan.errors.join("; ")}</div> : null}
+      {scan?.errors?.length ? (
+        scan.complete === false ? (
+          <div className="notice warn">Partial data: {scan.errors.join("; ")}</div>
+        ) : (
+          <p className="muted small">Note: {scan.errors.join("; ")}</p>
+        )
+      ) : null}
       {scan?.warnings?.length ? <p className="muted small">Limits: {scan.warnings.join("; ")}</p> : null}
 
       <div className="table-wrap">
