@@ -1,64 +1,65 @@
-export const metadata = { title: "Method · Prediction Market Scanner" };
+export const metadata = { title: "How it works · prediction-market-scanner" };
 
 export default function Methodology() {
   return (
     <div className="prose">
-      <h1>Method</h1>
-      <p className="lede">What the scanner computes, and where it can be wrong.</p>
+      <h1>How it works</h1>
 
-      <h2>1. Pull live binary contracts</h2>
+      <h2>Pulling contracts</h2>
       <p>
-        Kalshi events (with nested markets) and Polymarket events from Gamma&apos;s keyset endpoint, paged with cursors.
-        Multi-leg combos, non Yes/No markets, contracts with no quotes, illiquid contracts (open interest or liquidity
-        under 50), and anything closing more than ~13 months out are dropped. The top 400 matches by score are priced
-        against live order books; any limit that is hit is shown on the Live page.
+        From Kalshi I pull events with their nested markets, and from Polymarket the events on Gamma&apos;s keyset
+        endpoint, both paged with cursors. I drop multi-leg combos, anything that isn&apos;t a Yes/No market, contracts
+        with no quotes, contracts with open interest or liquidity under 50, and anything closing more than about 13
+        months out. The top 400 matches by score get priced against live order books. If a limit is hit, the scan page
+        says so.
       </p>
 
-      <h2>2. Match the same contract across venues</h2>
+      <h2>Matching</h2>
       <p>
-        The venues phrase identical contracts differently (&ldquo;Cut 25bps&rdquo; vs &ldquo;Fed decreases interest
-        rates by 25 bps&rdquo;). Text is canonicalized (synonyms, phrases, stemming), and numeric thresholds, years,
-        calendar dates (&ldquo;before Nov 1&rdquo; is stored as Oct 31), over/under direction, inequality bounds, party
-        order, negation, and resolution shape (range vs threshold, touch vs on-a-date, individual vs race, announcement
-        vs event) are pulled out as structured features. Similarity is TF-IDF cosine with IDF fit on both venues. A
-        pair is <strong>rejected outright</strong> when any of those features disagree, when resolution-defining words
-        differ (votes vs seats, nominee vs winner, coding vs overall), or when close dates are more than 45 days apart,
-        and kept only if each side is the other&apos;s best match. An optional LLM pass (off unless{" "}
-        <code>ANTHROPIC_API_KEY</code> is set) reads both titles and rules and vetoes pairs that don&apos;t resolve
-        identically.
+        The two sites word the same contract differently (&ldquo;Cut 25bps&rdquo; on one, &ldquo;Fed decreases interest
+        rates by 25 bps&rdquo; on the other). Titles get normalized with synonyms and stemming, and then I pull out the
+        parts that decide how a contract resolves: thresholds, years, dates (&ldquo;before Nov 1&rdquo; becomes Oct 31),
+        over or under, inequality bounds, party order, negation, and the shape of the question (a range vs a threshold,
+        touching a price vs being there on a date, one person vs a whole race, an announcement vs the event itself).
+      </p>
+      <p>
+        Similarity is TF-IDF cosine, with IDF fit on both sites together. A pair is thrown out if any of those parts
+        disagree, if a word that changes the resolution differs (votes vs seats, nominee vs winner), or if the close
+        dates are more than 45 days apart. It&apos;s kept only if each side is the other&apos;s best match. There&apos;s
+        also an optional LLM check, off unless <code>ANTHROPIC_API_KEY</code> is set, that reads both rule texts and
+        vetoes pairs that don&apos;t resolve the same way.
       </p>
 
-      <h2>3. Price the hedge against real depth</h2>
+      <h2>Pricing</h2>
       <p>
-        One YES plus one NO on the same outcome always pays $1. For each pair, both directions are evaluated by walking
-        both ask ladders together in whole contracts, then keeping the prefix with the highest profit after exact
-        fees:
+        One YES plus one NO on the same outcome pays $1. For each pair I try both directions, walking both ask ladders
+        together in whole contracts, and keep the size with the highest profit after fees:
       </p>
-      <pre>{`profit = contracts − Σ price·size − fees
-Kalshi fee      = ceil_cent(0.07 · C · P · (1 − P))      per price level
-Polymarket fee  = round5(rate · C · (P · (1 − P))^exp)   taker, per market`}</pre>
+      <pre>{`profit = contracts - sum(price * size) - fees
+Kalshi fee     = ceil_cent(0.07 * C * P * (1 - P))      per price level
+Polymarket fee = round5(rate * C * (P * (1 - P))^exp)   taker, per market`}</pre>
       <p>
-        Kalshi only publishes bids, so its YES asks are its NO bids mirrored (ask = 1 − bid). Fees are rounded once per
-        price level; Kalshi rounds per resting order, so the true fee can be a cent or two higher. Trades that rounding
-        makes unprofitable are dropped. Annualized return is simple (not compounded): profit over capital (cost + fees),
-        scaled to the later close date, since the money is locked until then.
-      </p>
-
-      <h2>4. Measure persistence</h2>
-      <p>
-        A GitHub Action runs a full scan every 30 minutes and appends a snapshot to the <code>data</code> branch. An
-        episode ends only when a scan prices the pair and finds no edge; a missing pair or failed order book is a gap.
-        Lifetimes are bracketed between first-to-last profitable sighting and flat-scan-before to flat-scan-after, and
-        episodes cut off by the start or end of the data are excluded from the statistics.
+        Kalshi&apos;s API only gives bids, so a YES ask is 1 minus the best NO bid. I round fees once per price level.
+        Kalshi rounds per resting order, so the real fee can be a cent or two higher, and any trade that rounding would
+        flip to a loss is dropped. Annualized return is simple, not compounded: profit over cost plus fees, scaled to
+        the later of the two close dates, since the money is stuck until then.
       </p>
 
-      <h2>Known limitations</h2>
+      <h2>History</h2>
+      <p>
+        A GitHub Action runs the scan every 30 minutes and appends the result to the <code>data</code> branch. A gap
+        ends only when a scan prices the pair and finds nothing. A missing pair or a failed order book is a hole in the
+        data, not an end. Each lifetime gets a lower bound (first to last sighting) and an upper bound (the clean scan
+        before to the clean scan after). Gaps cut off by the start or end of the data are left out.
+      </p>
+
+      <h2>What it gets wrong</h2>
       <ul>
-        <li>Matching is heuristic. Always read both contracts&apos; resolution rules: different sources or deadlines turn an arbitrage into two unhedged bets.</li>
-        <li>Books move between the two fetches; quoted size is an upper bound.</li>
-        <li>Ignores deposit/withdrawal costs, Polymarket gas, and that Kalshi is US-only while Polymarket&apos;s international exchange is not available to US persons.</li>
-        <li>30-minute sampling misses short-lived edges, so fast arbitrage is undercounted.</li>
-        <li>Only the top 400 matched pairs are priced each run.</li>
+        <li>Matching is heuristic. If two contracts use different sources or deadlines, a &ldquo;hedge&rdquo; is really two separate bets.</li>
+        <li>The books move between the two fetches, so the size shown is a ceiling.</li>
+        <li>It ignores deposit and withdrawal costs and Polymarket gas. Kalshi is US-only and Polymarket&apos;s international exchange isn&apos;t open to US persons, so most people can&apos;t do both legs anyway.</li>
+        <li>Sampling every 30 minutes misses anything shorter, so fast gaps are undercounted.</li>
+        <li>Only the top 400 matched pairs get priced each run.</li>
       </ul>
     </div>
   );

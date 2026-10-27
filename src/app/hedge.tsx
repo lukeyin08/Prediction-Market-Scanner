@@ -66,7 +66,7 @@ export const legLabel = (l: Leg) => `${l.side} on ${VENUE[l.venue]}`;
  * A bar for $1 of payout: the two legs, fees, and what's left. If the pair
  * costs more than $1, the bar runs past the $1 mark and the overrun is hatched.
  */
-export function DollarBar({ b, size }: { b: Breakdown; size: "hero" | "mini" }) {
+export function DollarBar({ b }: { b: Breakdown }) {
   const cost = b.legs[0].price + b.legs[1].price + b.fee;
   const scale = Math.max(1, cost);
   const pct = (x: number) => `${(Math.max(0, x) / scale) * 100}%`;
@@ -82,21 +82,15 @@ export function DollarBar({ b, size }: { b: Breakdown; size: "hero" | "mini" }) 
 
   return (
     <div
-      className={size === "hero" ? "dollar" : "mini"}
+      className="bar"
       role="img"
       aria-label={`${parts.map((p) => p.title).join(", ")}. ${cost <= 1 ? "Costs less than $1." : "Costs more than $1."}`}
     >
       {parts.map((p, i) => (
-        <span key={i} className={`seg ${p.cls}`} style={{ width: pct(p.w) }} title={p.title} />
+        <span key={i} className={p.cls} style={{ width: pct(p.w) }} title={p.title} />
       ))}
-      {cost > 1 && (
-        <span
-          className="seg over"
-          aria-hidden
-          style={{ position: "absolute", left: pct(1), width: pct(cost - 1), top: 0, bottom: 0, margin: 0 }}
-        />
-      )}
-      <span className="par" aria-hidden style={{ left: pct(1) }} />
+      {cost > 1 && <span className="over" aria-hidden style={{ left: pct(1), width: pct(cost - 1) }} />}
+      <span className="dollar" aria-hidden style={{ left: pct(1) }} />
     </div>
   );
 }
