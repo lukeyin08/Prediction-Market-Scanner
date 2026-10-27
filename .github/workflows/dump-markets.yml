@@ -1,9 +1,12 @@
 name: dump-markets
 
-# Manually dump normalized markets from both venues as an artifact,
+# Manually dump normalized markets from both venues to the `fixtures` branch,
 # for offline matcher evaluation.
 on:
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   dump:
@@ -16,9 +19,17 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run dump -- --out fixtures
-      - uses: actions/upload-artifact@v4
-        with:
-          name: markets
-          path: fixtures/markets.json
-          retention-days: 7
+      - run: npm run dump -- --out fixtures-out
+      - name: Publish to fixtures branch
+        run: |
+          gzip -9 fixtures-out/markets.json
+          git worktree add --detach fixtures-branch
+          cd fixtures-branch
+          git checkout --orphan fixtures
+          git rm -rf . >/dev/null 2>&1 || true
+          cp ../fixtures-out/markets.json.gz .
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add markets.json.gz
+          git commit -m "market dump $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -f origin fixtures
