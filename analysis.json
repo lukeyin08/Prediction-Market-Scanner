@@ -1,0 +1,656 @@
+{
+  "generatedAt": "2026-10-27T15:57:13.169Z",
+  "scans": 1,
+  "firstScan": "2026-10-27T15:57:03.842Z",
+  "lastScan": "2026-10-27T15:57:03.842Z",
+  "timeseries": [
+    {
+      "t": "2026-10-27T15:57:03.842Z",
+      "matchedPairs": 111,
+      "opportunities": 55,
+      "executableProfit": 7713.26
+    }
+  ],
+  "episodes": [
+    {
+      "pairId": "KXBTCY-27JAN0100-B92500::0xbb379a14cd03f68c35c279ddbd928a6326f4fd2e21827f8cdaaf59715d6df50e",
+      "title": "Bitcoin price at the end of 2026: 90,000 to 94,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 1415.20959,
+      "peakEdge": 0.31003288000000007
+    },
+    {
+      "pairId": "KXCODINGMODEL-26DEC-GOOG::0x94f240d042917cabd55f0bcbcac7d4d2accd4436773bf91596f76572cac643cb",
+      "title": "Which AI company will have the best coding model at the end of 2026?: Google",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 1304.6903,
+      "peakEdge": 0.2873119999999999
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B67500::0xfd7fcadffdf6a454c940569d4e1e6a9cc8e8682b70b5eb5e7fbbe76bb1844c1c",
+      "title": "Bitcoin price at the end of 2026: 65,000 to 69,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 680.01371,
+      "peakEdge": 0.14510167000000004
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B97500::0xacec7e5b90ccb1ac4c950e3aff18156d6ce1bb7b0c87c001a281279412dca784",
+      "title": "Bitcoin price at the end of 2026: 95,000 to 99,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 653.95957,
+      "peakEdge": 0.17080407999999994
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B62500::0x6c8bc8cd9b2d64358ad995ccee8e998cf0f81a89c4be0b8e51eadf09c6be60ba",
+      "title": "Bitcoin price at the end of 2026: 60,000 to 64,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 500.3301,
+      "peakEdge": 0.10371074999999999
+    },
+    {
+      "pairId": "KXCODINGMODEL-26DEC-ANTH::0xe944062b6d02b59c5f6c39cd4d35538918053c0c7e5f8d7fa0ab1d4edb9baa46",
+      "title": "Which AI company will have the best coding model at the end of 2026?: Anthropic",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 479.583,
+      "peakEdge": 0.21880000000000002
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B112500::0x63eaf41ce1f475323e2202d7dfa3b1def8b82cd166f7007c50bfbf47615c7b01",
+      "title": "Bitcoin price at the end of 2026: 110,000 to 114,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 306.8305,
+      "peakEdge": 0.062018079999999955
+    },
+    {
+      "pairId": "KXLEADERSOUT-27JAN01-MDIACPC::0x8dd5ac33cd5d2b942c3f51d519648f1bbd75e854fa77255973f034bcf51f6434",
+      "title": "Which leaders will leave office in 2026?: Miguel Díaz-Canel",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 288.91976,
+      "peakEdge": 0.07067222999999996
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B57500::0x752fa61c93f16c4b15e85b0bd438d9c684176b0ea7b319a84c8aca34616e8a8c",
+      "title": "Bitcoin price at the end of 2026: 55,000 to 59,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 279.77208,
+      "peakEdge": 0.07019387999999996
+    },
+    {
+      "pairId": "KXBTC50VS100-BTC-26DEC31::0xdaa4866bae18be58c5a79d2aeeffd035ec78f1bb49dbd88f72993997778a990f",
+      "title": "Will BTC hit $50,000 before $100,000?: 50,000 first",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 216.27286,
+      "peakEdge": 0.044292000000000054
+    },
+    {
+      "pairId": "KXLEADERSOUT-27JAN01-VZELUKR::0xdf32503b14fe232043d9db63ae787db13ddbc8374f4d1d016fd7d90d68e87147",
+      "title": "Which leaders will leave office in 2026?: Volodymyr Zelenskyy",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 202.72004,
+      "peakEdge": 0.06690686999999995
+    },
+    {
+      "pairId": "KXVENEZUELALEADER-26DEC31-MCM::0x70187b4770796788b9d1f3fc6652c596870a9a837b96c832441652588f26029d",
+      "title": "Who will officially lead Venezuela at the end of 2026?: María Corina Machado",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 162.47166,
+      "peakEdge": 0.04267500000000004
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B122500::0xf9b6b5c3c6e07afe4aad6ed9ce4fa7545f9c2baa9f1dc632cd81a085c99acfe4",
+      "title": "Bitcoin price at the end of 2026: 120,000 to 124,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 156.04512,
+      "peakEdge": 0.04025752000000004
+    },
+    {
+      "pairId": "KXIPOANTHROPIC-DATE-26NOV16::0x94ae8e5414e036e2e9b6b6514c048042bf74d089614d7f7d73635693f9d5186b",
+      "title": "When will Anthropic officially announce an IPO?: Before Nov 16, 2026",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 132.81865,
+      "peakEdge": 0.06714699999999996
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B132500::0x885a6abefad122348b4fbd503473d7fd1f9035d0438cf988a7591620f316a859",
+      "title": "Bitcoin price at the end of 2026: 130,000 to 134,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 126.84837,
+      "peakEdge": 0.026352670000000022
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B142500::0xf0a4c0bc8a8162f0ac95b5a5af7fa665d20a19ca0db03b9117514dafc695f15e",
+      "title": "Bitcoin price at the end of 2026: 140,000 to 144,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 97.02554,
+      "peakEdge": 0.021017950000000018
+    },
+    {
+      "pairId": "KXLEADERSOUT-27JAN01-PSANPM::0x0ea6e9ff415871b64273a991ad7560f19d38a25449b996fa83655a5e8f818821",
+      "title": "Which leaders will leave office in 2026?: Pedro Sánchez",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 83.75422,
+      "peakEdge": 0.10659199999999999
+    },
+    {
+      "pairId": "KXLEADERSOUT-27JAN01-SLECPMFR::0x9dadfa633cab5b1f3b7711a47d16c9e352dc57654e1b746067bae3f82214435b",
+      "title": "Which leaders will leave office in 2026?: Sébastien Lecornu",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 76.0498,
+      "peakEdge": 0.0991230000000001
+    },
+    {
+      "pairId": "KXVENEZUELALEADER-26DEC31-DJT::0x746481a9f7ac20a4959a11ea5d535522040b0dfd7c21b920d5fe134a93c2c26c",
+      "title": "Who will officially lead Venezuela at the end of 2026?: Donald Trump",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 74.15,
+      "peakEdge": 0.014830230000000014
+    },
+    {
+      "pairId": "KXLEADERSOUT-27JAN01-VPUTRUS::0x21724762698f7be4a65bd5b076782cd4b27c7762516fecf88ccc0b4430492411",
+      "title": "Which leaders will leave office in 2026?: Vladimir Putin",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 65.59726,
+      "peakEdge": 0.03237647000000003
+    },
+    {
+      "pairId": "KXLEADERSOUT-27JAN01-AALSSYR::0x31ae3eec28ab6568bcc3d610f3857b4a3040b5842d57127e041bfee3cb54fc29",
+      "title": "Which leaders will leave office in 2026?: Ahmad al-Sharaa",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 59.19658,
+      "peakEdge": 0.02216103000000002
+    },
+    {
+      "pairId": "KXCODINGMODEL-26DEC-OPEN::0xccc84033ab481e4c1ed49fce3889e54a9f6c127b819a3bc17bbf2359d1e4c2bd",
+      "title": "Which AI company will have the best coding model at the end of 2026?: OpenAI",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 37.87905,
+      "peakEdge": 0.021267000000000025
+    },
+    {
+      "pairId": "KXNETANYAHUPARDON-26-NOV01::0x7586a96520578acaaaa4ea84a2582f197f84255da1f3392a7aa300386c187b37",
+      "title": "Will Benjamin Netanyahu be pardoned?: Before Nov 1, 2026",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 34.945,
+      "peakEdge": 0.126675
+    },
+    {
+      "pairId": "KXLEADERSOUT-27JAN01-EMACFRA::0xa269db945d01305fc42b3bfa3e01e95ee17619a5e490e26236d969401c79e2ec",
+      "title": "Which leaders will leave office in 2026?: Emmanuel Macron",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 30.39372,
+      "peakEdge": 0.04148663000000004
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B47500::0x024b68f77bfc019341ee3db8f57c103334e4b9430bba4746d8c94aafd8b36fee",
+      "title": "Bitcoin price at the end of 2026: 45,000 to 49,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 26.5023,
+      "peakEdge": 0.017139150000000016
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B27500::0xe326d1abf5fb59b82ecfdff3348e75f90561eace327ba1bdc8d38d045ddbe775",
+      "title": "Bitcoin price at the end of 2026: 25,000 to 29,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 26.08519,
+      "peakEdge": 0.006891200000000006
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B22500::0x23fb92bb72604ff35bfe591b5506de47f1bf6632ed55c388baa4843118bf69fc",
+      "title": "Bitcoin price at the end of 2026: 20,000 to 24,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 19.52311,
+      "peakEdge": 0.006097630000000005
+    },
+    {
+      "pairId": "KXALIENS-27::0x747dc809fb79e1b05be09c42d6179459a58de2ef3e40f02484a4e1260f741f75",
+      "title": "Will the U.S. confirm that aliens exist?: Before Jan 1, 2027",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 16.83171,
+      "peakEdge": 0.003864630000000003
+    },
+    {
+      "pairId": "KXLEADERSOUT-27JAN01-STAKJAP::0xe727d8f1cac667930c9b7cc9b443a079ff3cfac47de4933957ba741282763cf0",
+      "title": "Which leaders will leave office in 2026?: Sanae Takaichi",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 14.89344,
+      "peakEdge": 0.009101830000000009
+    },
+    {
+      "pairId": "KXLEADERSOUT-27JAN01-CSHEPMEX::0x932d0a12bb0c425408ff82bc99a242e2e4752d939a2f2a1097ef37af368783af",
+      "title": "Which leaders will leave office in 2026?: Claudia Sheinbaum",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 13.9568,
+      "peakEdge": 0.017560870000000017
+    },
+    {
+      "pairId": "KXMARALAGO-27-XJIN::0xa467b14d51f01b957109d9cbb1d6c124fab2a089d52ed8f471d23c2812e743b7",
+      "title": "Who will visit Mar-a-Lago in 2026?: Xi Jinping",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 13.66616,
+      "peakEdge": 0.028322879999999922
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-T149999.99::0xa7b594ae07d5c1590fa86028fcc2f8705990437237416556c05837a08b2e1cda",
+      "title": "Bitcoin price at the end of 2026: 150,000 or above",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 12.50972,
+      "peakEdge": 0.006479180000000006
+    },
+    {
+      "pairId": "KXVENEZUELALEADER-26DEC31-PHEG::0x4197bf7e572f1dd731669d33d05532c6d3b8cba71fb83dc69d789110e39c41b4",
+      "title": "Who will officially lead Venezuela at the end of 2026?: Pete Hegseth",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 11.07,
+      "peakEdge": 0.003582520000000003
+    },
+    {
+      "pairId": "KXLEADERSOUT-27JAN01-BNETISR::0x780fb498b1f10fe785545ab25b2129398fe8fca4fac25471f37884d02264fc09",
+      "title": "Which leaders will leave office in 2026?: Benjamin Netanyahu",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 10.4952,
+      "peakEdge": 0.04284300000000005
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B37500::0x2745c38ff0617cb345c1d2df19b4f74ea777508e07411e88eeb6ab3affcda2a2",
+      "title": "Bitcoin price at the end of 2026: 35,000 to 39,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 9.80733,
+      "peakEdge": 0.00966550000000001
+    },
+    {
+      "pairId": "KXLEADERSOUT-27JAN01-RERDTUR::0xbea2bc8100eff35242663564c967af9444681f75a3c16f6223d5fb48bef567fe",
+      "title": "Which leaders will leave office in 2026?: Recep Tayyip Erdoğan",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 8.5138,
+      "peakEdge": 0.02302887000000002
+    },
+    {
+      "pairId": "KXVENEZUELALEADER-26DEC31-DFIG::0x86a2f168603fae962d925c91b23fba47c0c7436a240056785de25e998bc30811",
+      "title": "Who will officially lead Venezuela at the end of 2026?: Dinorah Figuera",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 8.38196,
+      "peakEdge": 0.0027211200000000022
+    },
+    {
+      "pairId": "KXLEAVEMERZ-29JAN01-27JAN01::0x24054faa76513d7d4c87d0f7d9fe8336317da6406d05aea6e623f3aed9dd0c6c",
+      "title": "Friedrich Merz out as Chancellor?: Before Jan 1, 2027",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 8.15586,
+      "peakEdge": 0.03705200000000003
+    },
+    {
+      "pairId": "KXVENEZUELALEADER-26DEC31-MRUB::0x4c04cc7094bf35bd682eb4f0e492836b97392c213087a2b891d0b5d897a81eb2",
+      "title": "Who will officially lead Venezuela at the end of 2026?: Marco Rubio",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 7.97744,
+      "peakEdge": 0.014762680000000012
+    },
+    {
+      "pairId": "KXFRANCEEMERGENCY-27-26NOV01::0xcbd8e63f77949b5bd7a6d9ce4af9104d47ad25a610bb5091ac050a6a865dc6d6",
+      "title": "Will France declare a state of emergency?: Before Nov 1, 2026",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 5.71293,
+      "peakEdge": 0.0056280000000000045
+    },
+    {
+      "pairId": "KXIPOANTHROPIC-DATE-26DEC01::0xd840a4faf46b63d0be3f7918e8014fd848e396fdd76f2554f1497fb3553f8010",
+      "title": "When will Anthropic officially announce an IPO?: Before Dec 1, 2026",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 4.4191,
+      "peakEdge": 0.022607999999999996
+    },
+    {
+      "pairId": "KXVENEZUELALEADER-26DEC31-EPET::0x1dd7704a6d05cca078564bc0bac541261425bc9252acc5634639f5161daf45f9",
+      "title": "Who will officially lead Venezuela at the end of 2026?: Evan Pettus",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 4.31,
+      "peakEdge": 0.0017906300000000016
+    },
+    {
+      "pairId": "KXLOL-WORLDS26-G2::0x44b9932618e681666b107377fc3682f2a61320687974b5f806308c1fd81b9d50",
+      "title": "Worlds 2026 Champion: G2 Esports",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 4.25373,
+      "peakEdge": 0.0019594500000000023
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B32500::0x903a1387e6414be5529efc8f7757e30371e6698de9d68fa4ce33252009db69ef",
+      "title": "Bitcoin price at the end of 2026: 30,000 to 34,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 3.9604,
+      "peakEdge": 0.005137230000000005
+    },
+    {
+      "pairId": "KXLEADERSOUT-27JAN01-JMILARG::0x139b8911f111f845384ee15d68afc49a956da1fc4a3d7ee591f6f64a1f53660f",
+      "title": "Which leaders will leave office in 2026?: Javier Milei",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 2.96585,
+      "peakEdge": 0.017360320000000016
+    },
+    {
+      "pairId": "KXVENEZUELALEADER-26DEC31-JROD::0xcef0ea92825ef2e046a97ef9b628709d0071614832d3bfc9c6c8dc119a472618",
+      "title": "Who will officially lead Venezuela at the end of 2026?: Jorge Rodríguez",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 2.4956,
+      "peakEdge": 0.0017211200000000015
+    },
+    {
+      "pairId": "KXTRUMPPARDON-27JAN01-DJT::0xc3d229efc876fce37afbaf3e467b50ab64a4747ea8c5224bc7cf7e8acf465ffc",
+      "title": "Who will Trump pardon in 2026?: Donald Trump",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 2.43188,
+      "peakEdge": 0.015293750000000014
+    },
+    {
+      "pairId": "KXVENEZUELALEADER-26DEC31-DCAI::0x1198bf982483cc6f0a3d3de63d7703117ed19c5b5a9474541a2a3b6b0b5e51f3",
+      "title": "Who will officially lead Venezuela at the end of 2026?: Dan Caine",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 2.36,
+      "peakEdge": 0.0008602800000000008
+    },
+    {
+      "pairId": "KXVENEZUELALEADER-26DEC31-DRON::0xd46931250308613b38c1fdad5cfeaeaae05818bc445668ad4629f12e92aac690",
+      "title": "Who will officially lead Venezuela at the end of 2026?: Diosdado Cabello Rondón",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 2.26874,
+      "peakEdge": 0.0008602800000000008
+    },
+    {
+      "pairId": "KXVENEZUELALEADER-26DEC31-EGON::0xb122b2a17c8dea01d5e8ffe04316bbe011f9bf80c989bb82afde2f39a3fd4441",
+      "title": "Who will officially lead Venezuela at the end of 2026?: Edmundo González",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 1.09138,
+      "peakEdge": 0.004238470000000004
+    },
+    {
+      "pairId": "KXFEDCUT-31DEC28-31DEC26::0xb9aee520bf51ac5f00b5c43e54ef9245bc9fcdef866ce8a33025f9a441cc651d",
+      "title": "Next Fed rate cut?: Before 2027",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 0.99,
+      "peakEdge": 0.0033070000000000026
+    },
+    {
+      "pairId": "KXLOL-WORLDS26-KC::0xcccee6ec39880178d72a254694097a24c621f88eaf6b1779054d87b26ef55f2e",
+      "title": "Worlds 2026 Champion: Karmine Corp",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 0.73056,
+      "peakEdge": 0.000910200000000001
+    },
+    {
+      "pairId": "KXARREST-27JAN-GNEW::0x7947bc114b6a3b869470b02cd50bfa717c1411b57fd060071dd168787304f114",
+      "title": "Who will be arrested in 2026?: Gavin Newsom",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 0.58191,
+      "peakEdge": 0.008628000000000007
+    },
+    {
+      "pairId": "KXLEADERSOUT-27JAN01-LSILBRA::0x0716a90a7a2e642eb65255c22187174165da4518ad3811c543df3eabcd08c9dc",
+      "title": "Which leaders will leave office in 2026?: Luiz Inácio Lula da Silva",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 0.45329,
+      "peakEdge": 0.006965750000000007
+    },
+    {
+      "pairId": "KXBTCY-27JAN0100-B42500::0x1e5564c1a2a6839cc2780a889437c63786a2c2ec5e95569b710ee659a3e8baa2",
+      "title": "Bitcoin price at the end of 2026: 40,000 to 44,999.99",
+      "direction": "KALSHI_YES+POLY_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T15:57:03.842Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 0.38784,
+      "peakEdge": 0.0011245900000000017
+    }
+  ],
+  "summary": {
+    "episodes": 55,
+    "medianDurationMin": 0,
+    "p90DurationMin": 0,
+    "shareSingleScan": 1,
+    "pairsSeen": 111,
+    "pairsEverArbitrageable": 55,
+    "medianPeakProfit": 16.83171
+  },
+  "durationHistogram": [
+    {
+      "bucket": "single scan",
+      "count": 55
+    },
+    {
+      "bucket": "< 1h",
+      "count": 0
+    },
+    {
+      "bucket": "1–6h",
+      "count": 0
+    },
+    {
+      "bucket": "6–24h",
+      "count": 0
+    },
+    {
+      "bucket": "1–3d",
+      "count": 0
+    },
+    {
+      "bucket": "> 3d",
+      "count": 0
+    }
+  ]
+}
