@@ -18,7 +18,7 @@ async function main() {
   const out = arg("out", "fixtures");
   const now = Date.now();
   const [kRes, pRes] = await Promise.all([fetchKalshiMarkets(), fetchPolymarketMarkets()]);
-  for (const e of [...kRes.errors, ...pRes.errors]) console.error(e);
+  for (const e of [...kRes.errors, ...pRes.errors, ...kRes.warnings, ...pRes.warnings]) console.error(e);
   const k = kRes.data;
   const p = pRes.data;
   const kalshi = liveFilter(k, now, 400, 50);

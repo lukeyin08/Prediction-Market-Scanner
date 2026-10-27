@@ -88,7 +88,10 @@ export function normalizeKalshiMarket(ev: KalshiEventRaw, m: KalshiMarketRaw): B
 
 export interface FetchResult<T> {
   data: T;
+  /** Requests that failed: coverage is missing data it should have had. */
   errors: string[];
+  /** Deliberate limits that were hit (page caps): coverage is partial by design. */
+  warnings: string[];
 }
 
 /** Page through open events. A failed page stops pagination but keeps everything fetched so far. */
@@ -97,8 +100,9 @@ export async function fetchKalshiMarkets(
 ): Promise<FetchResult<BinaryMarket[]>> {
   const out: BinaryMarket[] = [];
   const errors: string[] = [];
+  const warnings: string[] = [];
   let cursor: string | undefined;
-  const maxPages = opts.maxPages ?? 40;
+  const maxPages = opts.maxPages ?? 150;
   for (let page = 0; page < maxPages; page++) {
     const qs = new URLSearchParams({ status: "open", with_nested_markets: "true", limit: "200" });
     if (cursor) qs.set("cursor", cursor);
@@ -117,9 +121,9 @@ export async function fetchKalshiMarkets(
     }
     cursor = data.cursor || undefined;
     if (!cursor || !(data.events ?? []).length) break;
-    if (page === maxPages - 1) errors.push(`Kalshi pagination cap reached (${maxPages} pages)`);
+    if (page === maxPages - 1) warnings.push(`Kalshi pagination cap reached (${maxPages} pages)`);
   }
-  return { data: out, errors };
+  return { data: out, errors, warnings };
 }
 
 /**

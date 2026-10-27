@@ -99,47 +99,43 @@ export function normalizePolyMarket(ev: PolyEventRaw, m: PolyMarketRaw): BinaryM
 }
 
 /**
- * Page through every active event. Gamma may return fewer rows than requested,
- * so advance the offset by what actually came back and stop only on an empty
- * page. Hitting the page cap is reported, since it means coverage is partial.
+ * Page through every open event with Gamma's keyset (cursor) endpoint. The
+ * offset-based /events endpoint rejects offsets past ~2,000, which silently
+ * truncates coverage. Hitting our own page cap is reported as a warning.
  */
 export async function fetchPolymarketMarkets(
-  opts: { maxPages?: number; pageSize?: number; signal?: AbortSignal } = {},
+  opts: { maxPages?: number; signal?: AbortSignal; minLiquidity?: number } = {},
 ): Promise<FetchResult<BinaryMarket[]>> {
   const out: BinaryMarket[] = [];
   const errors: string[] = [];
-  const pageSize = opts.pageSize ?? 500;
-  const maxPages = opts.maxPages ?? 60;
-  let offset = 0;
+  const warnings: string[] = [];
+  const maxPages = opts.maxPages ?? 300;
+  let cursor: string | undefined;
+  let events = 0;
   let page = 0;
   for (; page < maxPages; page++) {
-    const qs = new URLSearchParams({
-      active: "true",
-      closed: "false",
-      archived: "false",
-      limit: String(pageSize),
-      offset: String(offset),
-      order: "id",
-      ascending: "true",
-    });
-    let events: PolyEventRaw[];
+    const qs = new URLSearchParams({ closed: "false", limit: "100" });
+    if (opts.minLiquidity) qs.set("liquidity_min", String(opts.minLiquidity));
+    if (cursor) qs.set("after_cursor", cursor);
+    let data: { events?: PolyEventRaw[]; next_cursor?: string };
     try {
-      events = await fetchJson<PolyEventRaw[]>(`${GAMMA_BASE}/events?${qs}`, { signal: opts.signal });
+      data = await fetchJson(`${GAMMA_BASE}/events/keyset?${qs}`, { signal: opts.signal });
     } catch (e) {
       errors.push(`Polymarket events page ${page + 1}: ${errorMessage(e)}`);
       break;
     }
-    if (!Array.isArray(events) || !events.length) break;
-    for (const ev of events) {
+    for (const ev of data.events ?? []) {
+      events += 1;
       for (const m of ev.markets ?? []) {
         const bm = normalizePolyMarket(ev, m);
         if (bm) out.push(bm);
       }
     }
-    offset += events.length;
+    cursor = data.next_cursor || undefined;
+    if (!cursor || !(data.events ?? []).length) break;
   }
-  if (page === maxPages) errors.push(`Polymarket pagination cap reached (${maxPages} pages, ${offset} events)`);
-  return { data: out, errors };
+  if (page === maxPages) warnings.push(`Polymarket pagination cap reached (${maxPages} pages, ${events} events)`);
+  return { data: out, errors, warnings };
 }
 
 export function toAsks(levels: { price: string; size: string }[] | undefined): Level[] {

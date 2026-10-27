@@ -121,9 +121,9 @@ function downsample<T>(xs: T[], max: number): T[] {
  * which the same pair stayed profitable in the same direction.
  *
  * An episode only ends on evidence: a scan that priced the pair (both books
- * present) and found no profit in that direction. A scan that is incomplete,
- * or where the pair is missing or unpriced, is treated as a gap rather than
- * a close. A gap longer than `maxGapMin` ends the episode as censored.
+ * present) and found no profit in that direction. A scan where the pair is
+ * missing or unpriced is treated as a gap rather than a close. A gap longer
+ * than `maxGapMin` ends the episode as censored.
  */
 export function analyze(
   snapshots: Snapshot[],
@@ -197,8 +197,10 @@ export function analyze(
       }
     }
 
-    // Close episodes only on evidence, and remember where each pair was flat.
-    if (s.complete !== false) {
+    // Close episodes only on evidence (the pair was priced and flat), and remember
+    // where each pair was flat. Overall scan coverage doesn't matter here: a pair
+    // that is present and priced was observed, whatever else the scan missed.
+    {
       for (const p of s.pairs) {
         if (p.priced === false) continue;
         for (const dir of ["KALSHI_YES+POLY_NO", "POLY_YES+KALSHI_NO"]) {

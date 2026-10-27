@@ -89,16 +89,20 @@ export async function runScan(opts: ScanOptions = {}): Promise<ScanResult> {
 
   const [kRes, pRes] = await Promise.all([
     fetchKalshiMarkets({ maxPages: opts.kalshiPages, signal }),
-    fetchPolymarketMarkets({ maxPages: opts.polymarketPages, signal }),
+    fetchPolymarketMarkets({ maxPages: opts.polymarketPages, signal, minLiquidity: opts.minLiquidity ?? 50 }),
   ]);
   const errors = [...kRes.errors, ...pRes.errors];
+  const warnings = [...kRes.warnings, ...pRes.warnings];
 
   const maxDays = opts.maxDaysToClose ?? 400;
   const minLiq = opts.minLiquidity ?? 50;
   const kalshi = liveFilter(kRes.data, now, maxDays, minLiq);
   const poly = liveFilter(pRes.data, now, maxDays, minLiq);
 
-  const matched = matchMarkets(kalshi, poly).slice(0, opts.maxPairs ?? 150);
+  const allMatched = matchMarkets(kalshi, poly);
+  const maxPairs = opts.maxPairs ?? 400;
+  if (allMatched.length > maxPairs) warnings.push(`Pair cap reached: priced the top ${maxPairs} of ${allMatched.length} matches`);
+  const matched = allMatched.slice(0, maxPairs);
   if (opts.verify) await verifyPairs(matched, { signal });
 
   const [kBooks, pBooks] = await Promise.all([
@@ -138,6 +142,7 @@ export async function runScan(opts: ScanOptions = {}): Promise<ScanResult> {
     },
     pairs,
     errors,
+    warnings,
     // Complete = both venues fully paged and nearly every matched pair has depth.
     complete: !kRes.errors.length && !pRes.errors.length && booksMissing <= Math.max(2, matched.length * 0.1),
   };

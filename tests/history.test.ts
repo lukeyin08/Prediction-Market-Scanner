@@ -50,16 +50,14 @@ describe("analyze", () => {
     expect(a.episodes[0].censored).toBeNull();
   });
 
-  it("does not end episodes on an incomplete scan", () => {
+  it("ends an episode on a priced, flat observation even if the scan hit a coverage limit", () => {
     const a = analyze([
       snap(T("10:00"), [pair("A", 0)]),
       snap(T("10:30"), [pair("A", 2)]),
       snap(T("11:00"), [pair("A", 0)], { complete: false }),
-      snap(T("11:30"), [pair("A", 2)]),
-      snap(T("12:00"), [pair("A", 0)]),
     ]);
     expect(a.episodes).toHaveLength(1);
-    expect(a.episodes[0].observations).toBe(2);
+    expect(a.episodes[0].censored).toBeNull();
   });
 
   it("marks episodes cut off by the start or end of the data as censored and excludes them from lifetime stats", () => {

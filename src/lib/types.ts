@@ -113,8 +113,11 @@ export interface ScanResult {
   generatedAt: string;
   stats: ScanStats;
   pairs: PairResult[];
+  /** Failed requests. */
   errors: string[];
-  /** False when a venue failed to page fully or many order books were missing. */
+  /** Limits that were hit on purpose (page or pair caps). */
+  warnings?: string[];
+  /** False when a venue request failed or many order books were missing. Caps alone don't count. */
   complete?: boolean;
   /** Set by the API when serving the last scheduled snapshot instead of a live scan. */
   fromSnapshot?: boolean;
