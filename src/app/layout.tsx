@@ -19,8 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </header>
         <main>{children}</main>
         <footer>
-          Data from the public Kalshi and Polymarket APIs. Not investment advice. If you trade anything here, read both
-          contracts&apos; resolution rules first.
+          Data from the public Kalshi and Polymarket APIs.
         </footer>
       </body>
     </html>
