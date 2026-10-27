@@ -6,5 +6,6 @@
  * 1: initial text-similarity matcher (many false matches)
  * 2: resolution-shape, bounds, label and topic constraints
  * 3: whole-contract book walk, best rounded-fee prefix, conservative fee lookups
+ * 4: date/negation/party/critical-word constraints, stricter numbers and paths
  */
-export const SCANNER_VERSION = 3;
+export const SCANNER_VERSION = 4;

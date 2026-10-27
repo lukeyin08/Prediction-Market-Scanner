@@ -125,6 +125,22 @@ export function constrain(
   if (ks.race !== ps.race) return null;
   if (ks.announce !== ps.announce) return null;
   if (ks.path && ps.path && ks.path !== ps.path) return null;
+  // With a price/level threshold, "reach X by D" and "be above X on D" pay off
+  // differently, so a path we can't classify on one side is not good enough.
+  const hasThreshold = k.f.numbers.length > 0 || p.f.numbers.length > 0;
+  if (hasThreshold && (ks.path || ps.path) && ks.path !== ps.path) return null;
+
+  // Negation, party order, and resolution-defining words must agree exactly.
+  if (k.f.negated !== p.f.negated) return null;
+  if (k.f.parties.length >= 2 && p.f.parties.length >= 2 && k.f.parties.join() !== p.f.parties.join()) return null;
+  if (k.f.critical.join() !== p.f.critical.join()) return null;
+
+  // Dates: "before Nov 1" and "by Oct 31" are normalized to the same day. A
+  // different day or month is a different contract (daily/weekly series, the
+  // October vs December Fed meeting).
+  // Date sets must be identical: "Oct 24 to Oct 26" vs "Oct 26 to Oct 28" share a day but differ.
+  if (k.f.dates.length && p.f.dates.length && k.f.dates.join() !== p.f.dates.join()) return null;
+  if (k.f.months.length && p.f.months.length && !k.f.months.some((m) => p.f.months.includes(m))) return null;
 
   // The specific outcome named in a multi-outcome event ("Google", "Xi Jinping",
   // "Cut 25bps") must appear on the other side.
@@ -168,11 +184,8 @@ export function constrain(
   const pn = p.f.numbers;
   if (kn.length && pn.length) {
     const shared = kn.filter((x) => pn.some((y) => sameNumber(x, y)));
-    if (!shared.length) return null;
-    if (shared.length !== kn.length || shared.length !== pn.length) {
-      score -= 0.1;
-      flags.push("Numeric terms only partially match");
-    }
+    // Every threshold must agree: "Q3 GDP above 2%" vs "Q4 GDP above 2%" share the 2.
+    if (shared.length !== kn.length || shared.length !== pn.length) return null;
   } else if (kn.length || pn.length) {
     score -= 0.12;
     flags.push("Only one side states a numeric threshold");
@@ -185,10 +198,6 @@ export function constrain(
     return null;
   }
   if (k.f.direction && p.f.direction && k.f.direction !== p.f.direction) return null;
-  if (k.f.months.length && p.f.months.length && !k.f.months.some((m) => p.f.months.includes(m))) {
-    score -= 0.1;
-    flags.push("Different months mentioned");
-  }
 
   return { score, flags };
 }
