@@ -112,8 +112,6 @@ tests/            vitest
 - GitHub turns off scheduled workflows after 60 days with no repo activity. The site marks data older than 2 hours as stale.
 - The `data` branch grows by a few MB a day.
 
-Not investment advice.
-
 ## License
 
 MIT
