@@ -20,6 +20,8 @@ const PHRASES: [RegExp, string][] = [
   [/\bbasis points?\b|\bbps\b|\bbp\b/g, " bps "],
   [/\binterest rates?\b/g, " rate "],
   [/\bprime minister\b/g, " primeminister "],
+  [/\bhead of (?:state|government)\b/g, " leader "],
+  [/\bleague of legends\b|\blol\b/g, " "],
   [/\bpresidential election\b/g, " president election "],
   [/\belectoral college\b/g, " electoralcollege "],
   [/\bpopular vote\b/g, " popularvote "],
@@ -69,6 +71,7 @@ const SYNONYMS: Record<string, string> = {
   nominee: "nomination",
   nominated: "nomination",
   elected: "election",
+  race: "election",
   elects: "election",
 };
 
@@ -91,8 +94,8 @@ const STOPWORDS = new Set([
   "a", "an", "the", "will", "be", "is", "are", "was", "to", "of", "in", "on", "at", "by", "for",
   "and", "or", "as", "with", "from", "this", "that", "it", "its", "before", "after", "during",
   "end", "than", "any", "which", "who", "what", "when", "how", "does", "do", "did", "get", "have",
-  "has", "his", "her", "their", "next", "market", "yes", "no", "least", "more", "most", "into",
-  "out", "up", "down", "over", "under", "between", "per", "via", "through", "about", "if", "then",
+  "has", "his", "her", "their", "market", "yes", "no", "least", "more", "most", "into",
+  "up", "down", "over", "under", "between", "per", "via", "through", "about", "if", "then",
   "meeting", "game", "match",
 ]);
 
@@ -105,16 +108,67 @@ export interface Features {
   tokens: string[];
   /** Numeric thresholds such as 4.25 (percent), 100000 (dollars), 25 (bps). */
   numbers: number[];
+  /**
+   * Numbers that carry an inequality, e.g. ">25bps" -> "gt:25", "50+ bps" -> "gte:50",
+   * "$100k or more" -> "gte:100000". "Cut >25bps" and "cut 25bps" are different contracts.
+   */
+  bounds: string[];
   years: number[];
   months: string[];
   direction: "over" | "under" | null;
+  /** How the contract resolves, independent of wording. Pairs must agree on all three. */
+  shape: Shape;
+}
+
+export interface Shape {
+  /** Bucketed outcome, e.g. "$90,000 to $94,999.99". */
+  range: boolean;
+  /** "touch": hits a level at any time before a deadline. "terminal": measured at one moment. */
+  path: "touch" | "terminal" | null;
+  /** Relative race among outcomes: "next leader out", "hit $50k before $100k", "50,000 first". */
+  race: boolean;
+  /** Resolves on an announcement ("announce an IPO") rather than the event itself ("IPO"). */
+  announce: boolean;
+}
+
+const RANGE_RE = /\d[\d,.]*\s*(?:k|m|%|bps)?\s*(?:to|-|–|through)\s*\$?\d|\bbetween\s+\$?\d/;
+const TOUCH_RE = /\b(?:reach|reaches|reached|hit|hits|dip|dips|touch|touches|at any (?:point|time)|all[- ]time high|ath)\b/;
+const TERMINAL_RE =
+  /\b(?:end of|at the end|year[- ]end|on (?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? \d|close[sd]? (?:at|above|below|over|under)|closing|settle[sd]?|final (?:price|value))\b/;
+const RACE_RE = /\bnext\b|\bfirst\s*(?:\?|$|\||to\b)|\bbefore \$?\d[\d,.]*\s*(?:k|m)?\s*(?:\?|$|\|)/;
+
+export function detectShape(rawText: string): Shape {
+  const t = rawText.toLowerCase();
+  const touch = TOUCH_RE.test(t);
+  const terminal = TERMINAL_RE.test(t);
+  return {
+    range: RANGE_RE.test(t),
+    path: touch && !terminal ? "touch" : terminal && !touch ? "terminal" : null,
+    race: RACE_RE.test(t),
+    announce: /\bannounc(?:e|es|ed|ing|ement)\b/.test(t),
+  };
 }
 
 const NUMBER_RE =
   /(\$)?(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?\s*(%|k\b|m\b|mm\b|b\b|bn\b|million\b|billion\b|thousand\b|trillion\b|t\b)?/gi;
 
-function parseNumbers(text: string, months: Set<string>): { numbers: number[]; years: number[]; rest: string } {
+const PREFIX_BOUNDS: [RegExp, string][] = [
+  [/(?:>=|≥|at least|no less than|minimum of)\s*\$?\s*$/, "gte"],
+  [/(?:<=|≤|at most|no more than|maximum of)\s*\$?\s*$/, "lte"],
+  [/(?:>|more than|greater than|higher than)\s*\$?\s*$/, "gt"],
+  [/(?:<|less than|fewer than|lower than)\s*\$?\s*$/, "lt"],
+];
+const SUFFIX_BOUNDS: [RegExp, string][] = [
+  [/^\s*(?:\+|or (?:more|above|higher|greater|over))/, "gte"],
+  [/^\s*(?:or (?:less|below|lower|fewer|under))/, "lte"],
+];
+
+function parseNumbers(
+  text: string,
+  months: Set<string>,
+): { numbers: number[]; bounds: string[]; years: number[]; rest: string } {
   const numbers: number[] = [];
+  const bounds: string[] = [];
   const years: number[] = [];
   const rest = text.replace(NUMBER_RE, (full, dollar, intPart, frac, unit, offset: number, whole: string) => {
     const base = Number(String(intPart).replace(/,/g, "") + (frac ?? ""));
@@ -144,10 +198,16 @@ function parseNumbers(text: string, months: Set<string>): { numbers: number[]; y
             : u === "t" || u === "trillion"
               ? 1e12
               : 1;
-    numbers.push(roundSig(base * mult));
+    const value = roundSig(base * mult);
+    numbers.push(value);
+    const before = whole.slice(Math.max(0, offset - 20), offset);
+    const after = whole.slice(offset + full.length, offset + full.length + 16);
+    const op =
+      PREFIX_BOUNDS.find(([re]) => re.test(before))?.[1] ?? SUFFIX_BOUNDS.find(([re]) => re.test(after))?.[1];
+    if (op) bounds.push(`${op}:${value}`);
     return " ";
   });
-  return { numbers, years, rest };
+  return { numbers, bounds, years, rest };
 }
 
 function roundSig(x: number): number {
@@ -168,7 +228,7 @@ export function extractFeatures(text: string): Features {
   for (const [re, rep] of PHRASES) t = t.replace(re, rep);
 
   const monthNames = new Set(Object.keys(MONTHS));
-  const { numbers, years, rest } = parseNumbers(t, monthNames);
+  const { numbers, bounds, years, rest } = parseNumbers(t, monthNames);
 
   const months: string[] = [];
   const tokens: string[] = [];
@@ -194,8 +254,10 @@ export function extractFeatures(text: string): Features {
   return {
     tokens,
     numbers: [...new Set(numbers)].sort((a, b) => a - b),
+    bounds: [...new Set(bounds)].sort(),
     years: [...new Set(years)].sort(),
     months: [...new Set(months)],
     direction,
+    shape: detectShape(text),
   };
 }

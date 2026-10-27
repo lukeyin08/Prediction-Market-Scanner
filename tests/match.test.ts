@@ -80,6 +80,30 @@ describe("matchMarkets", () => {
     expect(matchMarkets(k, p)).toHaveLength(0);
   });
 
+  it("never matches a range bucket to a touch threshold", () => {
+    const k = [market("kalshi", "Bitcoin price at the end of 2026", "Bitcoin price at the end of 2026", close, "90,000 to 94,999.99")];
+    const p = [market("polymarket", "What price will Bitcoin hit in 2026?", "Will Bitcoin reach $90,000 by December 31, 2026?", close, "$90,000")];
+    expect(matchMarkets(k, p, { threshold: 0.3 })).toHaveLength(0);
+  });
+
+  it("never matches an individual contract to a race among outcomes", () => {
+    const k = [market("kalshi", "Which leaders will leave office in 2026?", "Will Vladimir Putin leave President of Russia before Jan 1, 2027?", "2026-12-31T00:00:00Z", "Vladimir Putin")];
+    const p = [market("polymarket", "Next leader out before 2027?", "Will Vladimir Putin be the next leader out before 2027?", "2026-12-31T00:00:00Z", "Vladimir Putin")];
+    expect(matchMarkets(k, p, { threshold: 0.3 })).toHaveLength(0);
+  });
+
+  it("treats inequality qualifiers as part of the threshold", () => {
+    const k = [market("kalshi", "Fed decision in Dec 2026?", "Will the Fed cut rates by more than 25bps?", close, "Cut >25bps")];
+    const p = [market("polymarket", "Fed decision in December?", "Will the Fed decrease interest rates by 25 bps after the December 2026 meeting?", close, "25 bps decrease")];
+    expect(matchMarkets(k, p, { threshold: 0.3 })).toHaveLength(0);
+  });
+
+  it("never matches an announcement to the event itself", () => {
+    const k = [market("kalshi", "When will Anthropic officially announce an IPO?", "Will Anthropic announce an IPO before Nov 16, 2026?", close, "Before Nov 16, 2026")];
+    const p = [market("polymarket", "Anthropic IPO by...?", "Will Anthropic IPO by November 15, 2026?", close, "November 15, 2026")];
+    expect(matchMarkets(k, p, { threshold: 0.3 })).toHaveLength(0);
+  });
+
   it("rejects pairs that close far apart", () => {
     const k = [market("kalshi", "Who will win the NYC mayoral race?", "Will Zohran Mamdani win?", "2026-11-04T00:00:00Z")];
     const p = [market("polymarket", "NYC mayoral election", "Will Zohran Mamdani win the NYC mayoral election?", "2027-06-01T00:00:00Z")];
@@ -95,18 +119,19 @@ describe("matchMarkets", () => {
   });
 
   it("keeps only mutual best matches", () => {
+    // Both venues label each outcome inside a multi-outcome event (yes_sub_title / groupItemTitle).
     const k = [
-      market("kalshi", "NBA Finals 2027 winner", "Will the Celtics win the 2027 NBA Finals?", "2027-06-20T00:00:00Z"),
-      market("kalshi", "NBA Finals 2027 winner", "Will the Thunder win the 2027 NBA Finals?", "2027-06-20T00:00:00Z"),
+      market("kalshi", "NBA Finals 2027 winner", "Will Boston win the 2027 NBA Finals?", "2027-06-20T00:00:00Z", "Boston Celtics"),
+      market("kalshi", "NBA Finals 2027 winner", "Will Oklahoma City win the 2027 NBA Finals?", "2027-06-20T00:00:00Z", "Oklahoma City Thunder"),
     ];
     const p = [
-      market("polymarket", "2027 NBA Champion", "Will the Boston Celtics win the 2027 NBA Finals?", "2027-06-25T00:00:00Z"),
-      market("polymarket", "2027 NBA Champion", "Will the Oklahoma City Thunder win the 2027 NBA Finals?", "2027-06-25T00:00:00Z"),
+      market("polymarket", "2027 NBA Champion", "Will the Boston Celtics win the 2027 NBA Finals?", "2027-06-25T00:00:00Z", "Boston Celtics"),
+      market("polymarket", "2027 NBA Champion", "Will the Oklahoma City Thunder win the 2027 NBA Finals?", "2027-06-25T00:00:00Z", "Oklahoma City Thunder"),
     ];
     const pairs = matchMarkets(k, p);
     expect(pairs).toHaveLength(2);
     for (const pair of pairs) {
-      const team = pair.kalshi.title.includes("Celtics") ? "Celtics" : "Thunder";
+      const team = pair.kalshi.subtitle!.includes("Celtics") ? "Celtics" : "Thunder";
       expect(pair.polymarket.title).toContain(team);
     }
   });

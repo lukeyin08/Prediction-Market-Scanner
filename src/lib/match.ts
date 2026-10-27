@@ -13,6 +13,8 @@ export interface MatchOptions {
 interface Doc {
   market: BinaryMarket;
   f: Features;
+  /** Tokens of the outcome label (Kalshi yes_sub_title / Polymarket groupItemTitle). */
+  label: string[];
   vec: Map<string, number>;
   norm: number;
 }
@@ -27,8 +29,48 @@ export function matchText(m: BinaryMarket): string {
   return parts.filter((p) => !seen.has(p) && seen.add(p)).join(" | ");
 }
 
-function buildDocs(markets: BinaryMarket[]): { market: BinaryMarket; f: Features }[] {
-  return markets.map((market) => ({ market, f: extractFeatures(matchText(market)) }));
+type RawDoc = { market: BinaryMarket; f: Features; label: string[] };
+
+function buildDocs(markets: BinaryMarket[]): RawDoc[] {
+  return markets.map((market) => ({
+    market,
+    f: extractFeatures(matchText(market)),
+    label: market.subtitle ? extractFeatures(market.subtitle).tokens : [],
+  }));
+}
+
+/** Tolerant token equality: handles transliteration ("ahmad"/"ahmed") and prefixes ("sharaa"/"alsharaa"). */
+export function tokenMatches(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (a.length >= 4 && b.length >= 4 && (a.startsWith(b) || b.startsWith(a) || a.endsWith(b) || b.endsWith(a))) return true;
+  if (Math.min(a.length, b.length) < 5 || Math.abs(a.length - b.length) > 1) return false;
+  return editDistanceAtMostOne(a, b);
+}
+
+function editDistanceAtMostOne(a: string, b: string): boolean {
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      i++;
+      j++;
+      continue;
+    }
+    if (++edits > 1) return false;
+    if (a.length > b.length) i++;
+    else if (b.length > a.length) j++;
+    else {
+      i++;
+      j++;
+    }
+  }
+  return edits + (a.length - i) + (b.length - j) <= 1;
+}
+
+function hasToken(tokens: Iterable<string>, t: string): boolean {
+  for (const x of tokens) if (tokenMatches(x, t)) return true;
+  return false;
 }
 
 function vectorize(f: Features, idf: Map<string, number>): { vec: Map<string, number>; norm: number } {
@@ -66,13 +108,52 @@ function sameNumber(x: number, y: number): boolean {
  * caveats a trader should check before treating it as arbitrage.
  */
 export function constrain(
-  k: { market: BinaryMarket; f: Features },
-  p: { market: BinaryMarket; f: Features },
+  k: RawDoc,
+  p: RawDoc,
   base: number,
   maxCloseGapDays: number,
+  idf: Map<string, number> = new Map(),
+  distinctiveIdf = Number.POSITIVE_INFINITY,
 ): { score: number; flags: string[] } | null {
   let score = base;
   const flags: string[] = [];
+
+  // Resolution shape must agree: these differ in payoff even with identical wording.
+  const ks = k.f.shape;
+  const ps = p.f.shape;
+  if (ks.range !== ps.range) return null;
+  if (ks.race !== ps.race) return null;
+  if (ks.announce !== ps.announce) return null;
+  if (ks.path && ps.path && ks.path !== ps.path) return null;
+
+  // The specific outcome named in a multi-outcome event ("Google", "Xi Jinping",
+  // "Cut 25bps") must appear on the other side.
+  for (const [side, other] of [
+    [k, p],
+    [p, k],
+  ] as const) {
+    if (!side.label.length) continue;
+    const found = side.label.filter((t) => hasToken(other.f.tokens, t)).length;
+    if (found / side.label.length < 0.6) return null;
+  }
+
+  // Distinctive topic words present on only one side ("coding", "pardon",
+  // "Mar-a-Lago") usually mean a different question about the same entity.
+  const distinctive = distinctiveIdf;
+  const orphans = new Set<string>();
+  for (const [side, other] of [
+    [k, p],
+    [p, k],
+  ] as const) {
+    for (const t of new Set(side.f.tokens)) {
+      if ((idf.get(t) ?? 0) < distinctive || side.label.some((l) => tokenMatches(l, t))) continue;
+      if (!hasToken(other.f.tokens, t)) orphans.add(t);
+    }
+  }
+  if (orphans.size) {
+    score -= Math.min(0.45, 0.15 * orphans.size);
+    flags.push(`Wording differs: ${[...orphans].slice(0, 4).join(", ")}`);
+  }
 
   const kClose = Date.parse(k.market.closeTime);
   const pClose = Date.parse(p.market.closeTime);
@@ -96,6 +177,9 @@ export function constrain(
     score -= 0.12;
     flags.push("Only one side states a numeric threshold");
   }
+
+  // An inequality on a threshold changes the contract ("cut >25bps" is a 50bp+ cut).
+  if (k.f.bounds.join() !== p.f.bounds.join()) return null;
 
   if (k.f.years.length && p.f.years.length && !k.f.years.some((y) => p.f.years.includes(y))) {
     return null;
@@ -124,7 +208,7 @@ export function matchMarkets(
   poly: BinaryMarket[],
   opts: MatchOptions = {},
 ): MatchedPair[] {
-  const threshold = opts.threshold ?? 0.5;
+  const threshold = opts.threshold ?? 0.7;
   const maxGap = opts.maxCloseGapDays ?? 45;
   const maxCandidates = opts.maxCandidates ?? 60;
 
@@ -138,8 +222,10 @@ export function matchMarkets(
   const n = kRaw.length + pRaw.length;
   const idf = new Map<string, number>();
   for (const [t, c] of df) idf.set(t, Math.log((n + 1) / (c + 1)) + 1);
+  // A word is "distinctive" if it appears in under 0.5% of all contracts (at least 3).
+  const distinctiveIdf = Math.log((n + 1) / (Math.max(3, n * 0.005) + 1)) + 1;
 
-  const toDoc = (d: { market: BinaryMarket; f: Features }): Doc => ({ ...d, ...vectorize(d.f, idf) });
+  const toDoc = (d: RawDoc): Doc => ({ ...d, ...vectorize(d.f, idf) });
   const kDocs = kRaw.map(toDoc);
   const pDocs = pRaw.map(toDoc);
 
@@ -170,7 +256,7 @@ export function matchMarkets(
       const pd = pDocs[pi];
       const base = cosine(kd, pd);
       if (base < threshold * 0.8) continue;
-      const c = constrain(kd, pd, base, maxGap);
+      const c = constrain(kd, pd, base, maxGap, idf, distinctiveIdf);
       if (!c || c.score < threshold) continue;
       const cand = { k: ki, p: pi, score: c.score, flags: c.flags };
       if (!bestForK.has(ki) || bestForK.get(ki)!.score < cand.score) bestForK.set(ki, cand);
