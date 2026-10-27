@@ -1,14 +1,20 @@
 {
-  "generatedAt": "2026-10-27T15:57:13.169Z",
-  "scans": 1,
+  "generatedAt": "2026-10-27T16:05:06.749Z",
+  "scans": 2,
   "firstScan": "2026-10-27T15:57:03.842Z",
-  "lastScan": "2026-10-27T15:57:03.842Z",
+  "lastScan": "2026-10-27T16:05:01.437Z",
   "timeseries": [
     {
       "t": "2026-10-27T15:57:03.842Z",
       "matchedPairs": 111,
       "opportunities": 55,
       "executableProfit": 7713.26
+    },
+    {
+      "t": "2026-10-27T16:05:01.437Z",
+      "matchedPairs": 34,
+      "opportunities": 15,
+      "executableProfit": 315.56
     }
   ],
   "episodes": [
@@ -138,9 +144,9 @@
       "title": "Who will officially lead Venezuela at the end of 2026?: María Corina Machado",
       "direction": "POLY_YES+KALSHI_NO",
       "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
       "peakProfit": 162.47166,
       "peakEdge": 0.04267500000000004
     },
@@ -215,9 +221,9 @@
       "title": "Who will officially lead Venezuela at the end of 2026?: Donald Trump",
       "direction": "POLY_YES+KALSHI_NO",
       "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
       "peakProfit": 74.15,
       "peakEdge": 0.014830230000000014
     },
@@ -314,9 +320,9 @@
       "title": "Will the U.S. confirm that aliens exist?: Before Jan 1, 2027",
       "direction": "POLY_YES+KALSHI_NO",
       "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
       "peakProfit": 16.83171,
       "peakEdge": 0.003864630000000003
     },
@@ -365,13 +371,24 @@
       "peakEdge": 0.006479180000000006
     },
     {
+      "pairId": "KXFEDDECISION-26DEC-C25::0xf17ad24eb4ad57926495b114149c765b9b95bc286eadc91cbbfa901ceb10d0b8",
+      "title": "Fed decision in Dec 2026?: Cut 25bps",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T16:05:01.437Z",
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 0,
+      "observations": 1,
+      "peakProfit": 11.53,
+      "peakEdge": 0.0023070000000000018
+    },
+    {
       "pairId": "KXVENEZUELALEADER-26DEC31-PHEG::0x4197bf7e572f1dd731669d33d05532c6d3b8cba71fb83dc69d789110e39c41b4",
       "title": "Who will officially lead Venezuela at the end of 2026?: Pete Hegseth",
       "direction": "POLY_YES+KALSHI_NO",
       "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
       "peakProfit": 11.07,
       "peakEdge": 0.003582520000000003
     },
@@ -398,6 +415,17 @@
       "peakEdge": 0.00966550000000001
     },
     {
+      "pairId": "KXVENEZUELALEADER-26DEC31-DFIG::0x86a2f168603fae962d925c91b23fba47c0c7436a240056785de25e998bc30811",
+      "title": "Who will officially lead Venezuela at the end of 2026?: Dinorah Figuera",
+      "direction": "POLY_YES+KALSHI_NO",
+      "start": "2026-10-27T15:57:03.842Z",
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
+      "peakProfit": 8.89196,
+      "peakEdge": 0.0027211200000000022
+    },
+    {
       "pairId": "KXLEADERSOUT-27JAN01-RERDTUR::0xbea2bc8100eff35242663564c967af9444681f75a3c16f6223d5fb48bef567fe",
       "title": "Which leaders will leave office in 2026?: Recep Tayyip Erdoğan",
       "direction": "POLY_YES+KALSHI_NO",
@@ -407,17 +435,6 @@
       "observations": 1,
       "peakProfit": 8.5138,
       "peakEdge": 0.02302887000000002
-    },
-    {
-      "pairId": "KXVENEZUELALEADER-26DEC31-DFIG::0x86a2f168603fae962d925c91b23fba47c0c7436a240056785de25e998bc30811",
-      "title": "Who will officially lead Venezuela at the end of 2026?: Dinorah Figuera",
-      "direction": "POLY_YES+KALSHI_NO",
-      "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
-      "peakProfit": 8.38196,
-      "peakEdge": 0.0027211200000000022
     },
     {
       "pairId": "KXLEAVEMERZ-29JAN01-27JAN01::0x24054faa76513d7d4c87d0f7d9fe8336317da6406d05aea6e623f3aed9dd0c6c",
@@ -435,9 +452,9 @@
       "title": "Who will officially lead Venezuela at the end of 2026?: Marco Rubio",
       "direction": "POLY_YES+KALSHI_NO",
       "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
       "peakProfit": 7.97744,
       "peakEdge": 0.014762680000000012
     },
@@ -446,9 +463,9 @@
       "title": "Will France declare a state of emergency?: Before Nov 1, 2026",
       "direction": "POLY_YES+KALSHI_NO",
       "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
       "peakProfit": 5.71293,
       "peakEdge": 0.0056280000000000045
     },
@@ -468,9 +485,9 @@
       "title": "Who will officially lead Venezuela at the end of 2026?: Evan Pettus",
       "direction": "POLY_YES+KALSHI_NO",
       "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
       "peakProfit": 4.31,
       "peakEdge": 0.0017906300000000016
     },
@@ -479,9 +496,9 @@
       "title": "Worlds 2026 Champion: G2 Esports",
       "direction": "POLY_YES+KALSHI_NO",
       "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
       "peakProfit": 4.25373,
       "peakEdge": 0.0019594500000000023
     },
@@ -512,9 +529,9 @@
       "title": "Who will officially lead Venezuela at the end of 2026?: Jorge Rodríguez",
       "direction": "POLY_YES+KALSHI_NO",
       "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
       "peakProfit": 2.4956,
       "peakEdge": 0.0017211200000000015
     },
@@ -534,9 +551,9 @@
       "title": "Who will officially lead Venezuela at the end of 2026?: Dan Caine",
       "direction": "POLY_YES+KALSHI_NO",
       "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
       "peakProfit": 2.36,
       "peakEdge": 0.0008602800000000008
     },
@@ -545,9 +562,9 @@
       "title": "Who will officially lead Venezuela at the end of 2026?: Diosdado Cabello Rondón",
       "direction": "POLY_YES+KALSHI_NO",
       "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
       "peakProfit": 2.26874,
       "peakEdge": 0.0008602800000000008
     },
@@ -556,9 +573,9 @@
       "title": "Who will officially lead Venezuela at the end of 2026?: Edmundo González",
       "direction": "POLY_YES+KALSHI_NO",
       "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
       "peakProfit": 1.09138,
       "peakEdge": 0.004238470000000004
     },
@@ -578,9 +595,9 @@
       "title": "Worlds 2026 Champion: Karmine Corp",
       "direction": "POLY_YES+KALSHI_NO",
       "start": "2026-10-27T15:57:03.842Z",
-      "end": "2026-10-27T15:57:03.842Z",
-      "durationMin": 0,
-      "observations": 1,
+      "end": "2026-10-27T16:05:01.437Z",
+      "durationMin": 7.9599166666666665,
+      "observations": 2,
       "peakProfit": 0.73056,
       "peakEdge": 0.000910200000000001
     },
@@ -619,22 +636,22 @@
     }
   ],
   "summary": {
-    "episodes": 55,
+    "episodes": 56,
     "medianDurationMin": 0,
-    "p90DurationMin": 0,
-    "shareSingleScan": 1,
-    "pairsSeen": 111,
-    "pairsEverArbitrageable": 55,
-    "medianPeakProfit": 16.83171
+    "p90DurationMin": 7.9599166666666665,
+    "shareSingleScan": 0.75,
+    "pairsSeen": 112,
+    "pairsEverArbitrageable": 56,
+    "medianPeakProfit": 15.862575
   },
   "durationHistogram": [
     {
       "bucket": "single scan",
-      "count": 55
+      "count": 42
     },
     {
       "bucket": "< 1h",
-      "count": 0
+      "count": 14
     },
     {
       "bucket": "1–6h",
