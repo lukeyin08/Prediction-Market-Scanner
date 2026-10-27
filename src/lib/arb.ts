@@ -53,6 +53,8 @@ export function walkLegs(direction: Direction, a: Leg, b: Leg, opts: WalkOptions
   let remA = asksA[0]?.size ?? 0;
   let remB = asksB[0]?.size ?? 0;
   let total = 0;
+  // Fill count after each step: candidate stopping points for the best prefix.
+  const checkpoints: number[] = [];
 
   while (i < asksA.length && j < asksB.length && total < maxContracts - EPS) {
     const pa = asksA[i].price;
@@ -60,24 +62,47 @@ export function walkLegs(direction: Direction, a: Leg, b: Leg, opts: WalkOptions
     const edge = 1 - pa - pb - marginalFee(a.fee, pa) - marginalFee(b.fee, pb);
     if (edge <= minEdge + EPS) break;
 
-    const q = Math.min(remA, remB, maxContracts - total);
+    // Whole contracts only: a fractional remainder on one leg can't be hedged.
+    const q = Math.floor(Math.min(remA, remB, maxContracts - total) + EPS);
+    if (q < 1) {
+      if (maxContracts - total < 1 - EPS) break;
+      if (remA < 1 - EPS) {
+        i += 1;
+        remA = asksA[i]?.size ?? 0;
+      }
+      if (remB < 1 - EPS) {
+        j += 1;
+        remB = asksB[j]?.size ?? 0;
+      }
+      continue;
+    }
+
     fills.push({ venue: a.venue, side: a.side, price: pa, size: q });
     fills.push({ venue: b.venue, side: b.side, price: pb, size: q });
+    checkpoints.push(fills.length);
     total += q;
     remA -= q;
     remB -= q;
-    if (remA <= EPS) {
+    if (remA < 1 - EPS) {
       i += 1;
       remA = asksA[i]?.size ?? 0;
     }
-    if (remB <= EPS) {
+    if (remB < 1 - EPS) {
       j += 1;
       remB = asksB[j]?.size ?? 0;
     }
   }
 
-  const merged = mergeFills(fills);
-  return summarize(direction, merged, a, b, topEdge, opts.daysToClose ?? null);
+  // The stop rule above uses unrounded fees, but Kalshi rounds each fill up to
+  // a cent, so a thin extra price level can lower total profit. Keep the
+  // prefix of steps whose exact, rounded profit is highest.
+  const daysToClose = opts.daysToClose ?? null;
+  let best = summarize(direction, [], a, b, topEdge, daysToClose);
+  for (const n of checkpoints) {
+    const candidate = summarize(direction, mergeFills(fills.slice(0, n)), a, b, topEdge, daysToClose);
+    if (candidate.profit > best.profit + EPS) best = candidate;
+  }
+  return best;
 }
 
 /** Combine consecutive fills at the same venue/side/price so fees round once per price level. */
@@ -128,8 +153,9 @@ function summarize(
   }
 
   const capital = cost + fees;
+  // Simple (not compounded) annualization; floor at one day so same-day trades still show a figure.
   const annualizedReturn =
-    daysToClose !== null && daysToClose >= 1 ? (profit / capital) * (365 / daysToClose) : null;
+    daysToClose !== null && daysToClose > 0 ? (profit / capital) * (365 / Math.max(daysToClose, 1)) : null;
   profit = round(profit, 6);
 
   return {

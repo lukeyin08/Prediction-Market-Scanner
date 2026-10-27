@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { kalshiBookFromBids, normalizeKalshiMarket } from "../src/lib/kalshi";
+import { feeCoeffFor, kalshiBookFromBids, normalizeKalshiMarket } from "../src/lib/kalshi";
 import { normalizePolyMarket, polyFeeModel, toAsks } from "../src/lib/polymarket";
 
 describe("Kalshi parsing", () => {
@@ -44,6 +44,12 @@ describe("Kalshi parsing", () => {
     expect(m!.url).toBe("https://kalshi.com/markets/kxfeddecision");
   });
 
+  it("applies reduced index fees to KX-prefixed series tickers", () => {
+    expect(feeCoeffFor("KXINX")).toBe(0.035);
+    expect(feeCoeffFor("INX")).toBe(0.035);
+    expect(feeCoeffFor("KXFEDDECISION")).toBe(0.07);
+  });
+
   it("skips multi-leg combo markets", () => {
     const m = normalizeKalshiMarket(
       { event_ticker: "KXMVE-1" },
@@ -85,6 +91,11 @@ describe("Polymarket parsing", () => {
       rate: 0.04,
       exponent: 1,
     });
+  });
+
+  it("charges a published fee rate even when feesEnabled is missing", () => {
+    expect(polyFeeModel({ conditionId: "x", feeSchedule: { rate: 0.04 } })).toEqual({ kind: "polymarket", rate: 0.04, exponent: 1 });
+    expect(polyFeeModel({ conditionId: "x", feesEnabled: false, feeSchedule: { rate: 0.04 } })).toEqual({ kind: "polymarket", rate: 0, exponent: 1 });
   });
 
   it("skips non Yes/No markets", () => {

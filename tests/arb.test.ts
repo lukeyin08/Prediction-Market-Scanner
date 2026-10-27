@@ -83,6 +83,27 @@ describe("walkLegs", () => {
     expect(r.contracts).toBe(0);
   });
 
+  it("stops before a thin level whose rounded Kalshi fee lowers total profit", () => {
+    // Reviewer repro: the 1-contract level at 0.47 adds a full-cent fee for ~1.9c of gross edge minus fee.
+    const r = walkLegs(
+      "KALSHI_YES+POLY_NO",
+      { venue: "kalshi", side: "YES", asks: [{ price: 0.4, size: 10 }, { price: 0.47, size: 1 }], fee: KALSHI },
+      { venue: "polymarket", side: "NO", asks: [{ price: 0.5, size: 10 }, { price: 0.511, size: 50 }], fee: POLY_FREE },
+    );
+    expect(r.contracts).toBe(10);
+    expect(r.profit).toBeCloseTo(0.83, 6);
+  });
+
+  it("trades whole contracts only", () => {
+    const r = walkLegs(
+      "KALSHI_YES+POLY_NO",
+      { venue: "kalshi", side: "YES", asks: [{ price: 0.4, size: 100 }], fee: KALSHI },
+      { venue: "polymarket", side: "NO", asks: [{ price: 0.5, size: 7.25 }, { price: 0.51, size: 3 }], fee: POLY_FREE },
+    );
+    expect(r.fills.every((f) => Number.isInteger(f.size))).toBe(true);
+    expect(r.contracts).toBe(10);
+  });
+
   it("charges Polymarket fees when the market has them", () => {
     const free = walkLegs(
       "POLY_YES+KALSHI_NO",

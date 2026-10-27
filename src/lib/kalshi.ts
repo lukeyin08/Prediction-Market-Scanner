@@ -51,6 +51,11 @@ export function seriesOf(eventTicker: string, seriesTicker?: string): string {
   return (seriesTicker ?? eventTicker.split("-")[0]).toUpperCase();
 }
 
+/** Fee coefficient for a series. Live tickers carry a "KX" prefix (KXINX) that the fee schedule omits (INX). */
+export function feeCoeffFor(series: string): number {
+  return KALSHI_SERIES_COEFF[series] ?? KALSHI_SERIES_COEFF[series.replace(/^KX/, "")] ?? KALSHI_DEFAULT_COEFF;
+}
+
 /** A quote of 0 means "nobody is bidding/offering" on Kalshi, not a free contract. */
 function quote(x: string | undefined): number | null {
   const v = num(x);
@@ -76,7 +81,7 @@ export function normalizeKalshiMarket(ev: KalshiEventRaw, m: KalshiMarketRaw): B
     yesAsk: quote(m.yes_ask_dollars),
     volume: num(m.volume_fp) ?? 0,
     liquidity: num(m.open_interest_fp) ?? 0,
-    fee: { kind: "kalshi", coeff: KALSHI_SERIES_COEFF[series] ?? KALSHI_DEFAULT_COEFF },
+    fee: { kind: "kalshi", coeff: feeCoeffFor(series) },
     rules: m.rules_primary,
   };
 }

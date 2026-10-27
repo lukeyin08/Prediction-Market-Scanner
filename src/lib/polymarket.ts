@@ -59,7 +59,8 @@ function parseList(x: string | string[] | undefined): string[] {
 
 export function polyFeeModel(m: PolyMarketRaw): FeeModel {
   const rate = m.feeSchedule?.rate ?? 0;
-  const charged = m.feesEnabled === true && m.feeType !== "zero_fees" && rate > 0;
+  // Conservative: charge whenever a rate is published, unless the market says it's fee-free.
+  const charged = rate > 0 && m.feesEnabled !== false && m.feeType !== "zero_fees";
   return { kind: "polymarket", rate: charged ? rate : 0, exponent: m.feeSchedule?.exponent ?? 1 };
 }
 
